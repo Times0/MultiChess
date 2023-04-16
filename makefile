@@ -15,10 +15,22 @@ LDLIBS   := -lm
 
 .PHONY: all clean
 
-all: $(EXE)
 
-$(EXE): $(OBJ) | $(BIN_DIR)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+all:
+	make client
+	make server
+
+client: src2/main_client.cpp
+	mkdir -p bin
+	g++ src2/main_client.cpp -o bin/client
+
+server: $(OBJ) | $(BIN_DIR)
+	mkdir -p bin
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o bin/server
+
+
+
+
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

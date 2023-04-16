@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define PORT 5000
+#define PORT 5200
 #define MAX_MSG_LEN 1024
 #define SERVER_IP "127.0.0.1"
 

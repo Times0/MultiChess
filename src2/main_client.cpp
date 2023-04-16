@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define PORT 5200
+#define PORT 5201
 #define MAX_MSG_LEN 1024
 
 int main(int argc, char *argv[])

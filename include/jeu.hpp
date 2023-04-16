@@ -1,5 +1,4 @@
-#ifndef JEU_HPP
-#define JEU_HPP
+#pragma once
 
 #include <string>
 #include "board.hpp"
@@ -12,8 +11,9 @@ class Jeu
 {
 private:
     int nbCoups;         /**< An integer that represents the number of moves made in the game. */
-    Board *board;        /**< A pointer to a Board object that represents the current state of the chess board. */
     Color currentPlayer; /**< A Color enumeration that represents the player who is currently making a move. */
+public:
+    Board *board; /**< A pointer to a Board object that represents the current state of the chess board. */
 
 public:
     /**
@@ -31,6 +31,8 @@ public:
      * @return true if the move was applied successfully, false otherwise.
      */
     bool coup();
+
+    bool jouer(std::string mouvement);
 
     /**
      * @brief The swap_player function swaps the current player.
@@ -73,5 +75,3 @@ public:
      */
     ~Jeu();
 };
-
-#endif
