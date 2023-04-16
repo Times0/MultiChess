@@ -1,0 +1,17 @@
+# Simple Queen castling test (both players).
+#
+b2b4
+b7b5
+c2c4
+c7c5
+b1a3
+b8a6
+c1b2
+c8b7
+d1c2
+d8c7
+O-O-O
+O-O-O
+/quit
+
+,,wK,wR,,wB,wN,wR,wP,wB,wQ,wP,wP,wP,wP,wP,wN,,,,,,,,,wP,wP,,,,,,,bP,bP,,,,,,bN,,,,,,,,bP,bB,bQ,bP,bP,bP,bP,bP,,,bK,bR,,bB,bN,bR, ?-?

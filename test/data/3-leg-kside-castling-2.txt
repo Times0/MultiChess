@@ -1,0 +1,16 @@
+# teste le grand roque noir. Tous les mouvements sont légaux.
+e2e4
+e7e5
+f1c4
+d7d6
+g1f3
+c8g4
+d2d3 
+b8c6
+c1e3 
+d8e7
+b1c3 
+O-O-O
+/quit
+
+wR,,,wQ,wK,,,wR,wP,wP,wP,,,wP,wP,wP,,,wN,wP,wB,wN,,,,,wB,,wP,,bB,,,,,,bP,,,,,,bN,bP,,,,,bP,bP,bP,,bQ,bP,bP,bP,,,bK,bR,,bB,bN,bR, ?-?

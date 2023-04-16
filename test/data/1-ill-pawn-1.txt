@@ -1,0 +1,29 @@
+# teste la détection de mouvements illegaux de pions
+# 
+e2e4 
+e7e5
+# le coup blanc suivant est illegal
+e4e5
+# ca devrait donc aux blancs de jouer à nouveau
+d2d4
+# le coup noir suivant est illegal
+e5f4
+# ca devrait donc aux noirs de jouer à nouveau
+f7f5
+# le coup blanc suivant est illegal
+f2f1
+# ca devrait donc aux blancs de jouer à nouveau
+f1a6
+# le coup noir suivant est illegal (le fou bloque)
+a7a6
+# ca devrait donc aux noirs de jouer à nouveau
+a7b6
+# ca devrait donc aux noirs de jouer à nouveau
+b7a6
+d4d5
+# le coup noir suivant est illegal (pion a6 bloque)
+a7a6
+c7c5
+/quit
+
+wR,wN,wB,wQ,wK,,wN,wR,wP,wP,wP,,,wP,wP,wP,,,,,,,,,,,,,wP,,,,,,bP,wP,bP,bP,,,bP,,,,,,,,bP,,,bP,,,bP,bP,bR,bN,bB,bQ,bK,bB,bN,bR, ?-?

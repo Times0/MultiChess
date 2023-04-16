@@ -1,0 +1,9 @@
+# test un echec
+e2e4
+f7f6
+# dame donne echec
+d1h5
+g7g6
+/quit
+
+wR,wN,wB,,wK,wB,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,,,wP,,,,,,,,,,,wQ,,,,,,bP,bP,,bP,bP,bP,bP,bP,,,bP,bR,bN,bB,bQ,bK,bB,bN,bR, ?-?

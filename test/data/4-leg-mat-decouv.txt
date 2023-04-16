@@ -1,0 +1,37 @@
+#
+# This game demonstrates a chess by discovering the B King
+# after move 6.Bf7xg6+  the W Queen threatens the B King.
+# Any move should void this chess. 
+
+# === PGN Format ===
+# 1. e4 e5
+# 2. Qh5 g6
+# 3. Qf3 Bg7
+# 4. Bc4 Ne7
+# 5. Bc4xf7+ Kf8
+# 6. Bf7xg6+ Nf5
+# 7. Qf3xf5+ Kg8
+# 8. Qf7 1-0 
+
+e2e4
+e7e5
+d1h5
+g7g6
+h5f3
+f8g7
+f1c4
+g8e7
+c4f7
+e8f8
+# next move discover the B King, yielding a chess by the W Queen
+f7g6
+# next is illegal since K still in chess
+h7g6
+# so black again
+e7f5
+f3f5
+f8g8
+f5f7
+/quit
+
+wR,wN,wB,,wK,,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,,,wP,,,,,,,,bP,,,,,,,,,,wB,,bP,bP,bP,bP,,wQ,bB,bP,bR,bN,bB,bQ,,,bK,bR, 1-0
