@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <signal.h>
+#include <pthread.h>
 
 #include <cstring>
 
@@ -11,21 +13,13 @@ using namespace std;
 #define PORT 5000
 #define MAX_MSG_LEN 1024
 
-int main(int argc, char *argv[])
+int connect_to_server(const char *SERVER_IP)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <server_ip>\n";
-        return EXIT_FAILURE;
-    }
-
-    const char *SERVER_IP = argv[1];
-
     // Create client socket
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (client_socket == -1)
     {
-        std::cerr << "Failed to create client socket\n";
+        cerr << "Failed to create client socket" << endl;
         return EXIT_FAILURE;
     }
 
@@ -36,45 +30,61 @@ int main(int argc, char *argv[])
     server_addr.sin_port = htons(PORT);
     if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
-        std::cerr << "Failed to connect to server\n";
+        cerr << "Failed to connect to server" << endl;
         return EXIT_FAILURE;
     }
 
-    std::cout << "Connected to server at " << SERVER_IP << ":" << PORT << std::endl;
+    cout << "Connected to server at " << SERVER_IP << ":" << PORT << endl;
 
-    // Exchange messages with server
+    return client_socket;
+}
+
+void *send_message(void *arg)
+{
+    int client_socket = *(int *)arg;
     char msg[MAX_MSG_LEN];
     while (true)
     {
-        // Read message from console
-        std::cout << "Enter message: ";
-        std::cin.getline(msg, MAX_MSG_LEN);
+        // Read message from stdin
+        cout << "Enter move : ";
+        cin.getline(msg, MAX_MSG_LEN);
 
         // Send message to server
         if (send(client_socket, msg, strlen(msg), 0) == -1)
         {
-            std::cerr << "Failed to send message to server\n";
-            return EXIT_FAILURE;
+            cerr << "Failed to send message to server" << endl;
+            return NULL;
         }
 
-        // Receive response from server
-        int msg_len = recv(client_socket, msg, MAX_MSG_LEN, 0);
-        if (msg_len == -1)
+        // Receive message from server
+        int bytes_received = recv(client_socket, msg, MAX_MSG_LEN, 0);
+        if (bytes_received == -1)
         {
-            std::cerr << "Failed to receive response from server\n";
-            return EXIT_FAILURE;
+            cerr << "Failed to receive message from server" << endl;
+            return NULL;
         }
-        else if (msg_len == 0)
-        {
-            std::cout << "Server disconnected\n";
-            break;
-        }
+        msg[bytes_received] = '\0';
+        
 
-        // Print received message
-        msg[msg_len] = '\0';
-        cout << "Received message: " << msg << endl;
+        cout << "Server: " << msg << endl;
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        cerr << "Usage: " << argv[0] << " <server_ip>" << endl;
+        return EXIT_FAILURE;
     }
 
+    const char *SERVER_IP = argv[1];
+    int client_socket = connect_to_server(SERVER_IP);
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, send_message, &client_socket);
+
+    pthread_join(thread, NULL);
     // Close socket
     close(client_socket);
 

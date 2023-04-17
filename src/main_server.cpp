@@ -60,11 +60,11 @@ int wait_for_clients(int nb_clients, int client_sockets[])
         client_sockets[i] = accept(server_socket, (struct sockaddr *)&client_addrs[i], &client_len);
         if (client_sockets[i] == -1)
         {
-            std::cerr << "Failed to accept client connection\n";
-            return EXIT_FAILURE;
+            perror("accept");
+            exit(EXIT_FAILURE);
         }
 
-        std::cout << "Client connected from " << inet_ntoa(client_addrs[i].sin_addr) << std::endl;
+        cout << "Client connected from " << inet_ntoa(client_addrs[i].sin_addr) << endl;
     }
 
     cout << "All clients connected, game starting..." << endl;
@@ -166,8 +166,14 @@ void *server_thread(void *arg)
             pthread_cond_signal(cond);
             break;
         case INVALID_COMMAND:
+            send(client_socket, "INVALID_COMMAND", 15, 0);
             break;
         case VALID_COMMAND:
+            send(client_socket, "VALID_COMMAND", 13, 0);
+            break;
+
+        default:
+            send(client_socket, "INVALID", 7, 0);
             break;
         }
     }
@@ -205,6 +211,7 @@ int main()
 {
     int nb_clients = 2;
     int client_sockets[nb_clients];
+
     wait_for_clients(nb_clients, client_sockets);
     Jeu monjeu;
 

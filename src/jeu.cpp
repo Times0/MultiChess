@@ -3,7 +3,6 @@
 #include <map>
 #include <regex>
 
-#include "jeu.hpp"
 
 using namespace std;
 

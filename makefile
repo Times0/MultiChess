@@ -7,7 +7,7 @@ BIN_DIR := bin
 SRC := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-CPPFLAGS := -Iinclude -MMD -MP
+CPPFLAGS := 
 CFLAGS   :=
 LDFLAGS  := -Llib
 LDLIBS   := -lm -pthread
@@ -20,7 +20,7 @@ game: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$(OBJ))
 
 client: $(SRC_DIR)/main_client.cpp
 	mkdir -p bin
-	g++ $(SRC_DIR)/main_client.cpp -o $(BIN_DIR)/$@
+	g++ $(SRC_DIR)/main_client.cpp -o $(BIN_DIR)/$@ $(LDFLAGS) $(LDLIBS)
 
 server: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main.o,$(OBJ)) 	 
 	mkdir -p bin
