@@ -8,7 +8,7 @@
 #include <cstring>
 
 using namespace std;
-#define PORT 5206
+#define PORT 5000
 #define MAX_MSG_LEN 1024
 
 int main(int argc, char *argv[])

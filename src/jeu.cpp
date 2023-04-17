@@ -18,7 +18,7 @@ Jeu::Jeu()
 
 void Jeu::afficher()
 {
-    system("clear");
+    //system("clear");
     string color = (board->get_turn() == WHITE) ? "white" : "black";
     cout << "Tour : " << color << endl;
     board->afficher();

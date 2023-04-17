@@ -6,10 +6,11 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 using namespace std;
 
-#define PORT 5206
+#define PORT 5000
 #define MAX_MSG_LEN 1024
 #define SERVER_IP "127.0.0.1"
 
@@ -118,6 +119,10 @@ typedef struct
 {
     int client_socket;
     Jeu *jeu;
+    Color color_to_play;
+    pthread_cond_t *cond;
+    pthread_mutex_t *mutex;
+
 } thread_args;
 
 void *server_thread(void *arg)
@@ -125,6 +130,9 @@ void *server_thread(void *arg)
     thread_args *args = (thread_args *)arg;
     int client_socket = args->client_socket;
     Jeu *jeu = args->jeu;
+    Color player = args->color_to_play;
+    pthread_cond_t *cond = args->cond;
+    pthread_mutex_t *mutex = args->mutex;
 
     char buffer[MAX_MSG_LEN];
 
@@ -136,20 +144,67 @@ void *server_thread(void *arg)
         }
 
         cout << "Received: " << buffer << endl;
+
+        if (player != jeu->board->get_turn())
+        {
+            if (send(client_socket, "NOT_YOUR_TURN", 13, 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            continue;
+        }
         Play_result r = jeu->jouer(buffer);
         switch (r)
         {
         case GAME_OVER:
             send(client_socket, "GAME_OVER", 9, 0);
+            return NULL;
             break;
         case INVALID_MOVE:
             send(client_socket, "INVALID_MOVE", 12, 0);
             break;
         case VALID_MOVE:
             send(client_socket, "VALID_MOVE", 10, 0);
+            cout << "Sending signal" << endl;
+            pthread_cond_signal(cond);
+            break;
+        case INVALID_COMMAND:
             break;
         }
     }
+
+    return NULL;
+}
+
+typedef struct
+{
+    Jeu *jeu;
+    pthread_cond_t *cond;
+    pthread_mutex_t *mutex;
+
+    bool *stop;
+} display_args;
+
+void *display_thread(void *arg)
+{
+    cout << "Display thread started" << endl;
+    display_args *args = (display_args *)arg;
+    Jeu *jeu = args->jeu;
+    pthread_cond_t *cond = args->cond;
+    pthread_mutex_t *mutex = args->mutex;
+    bool *stop = args->stop;
+
+    pthread_mutex_lock(mutex);
+
+    while (!*stop)
+    {
+        cout << "Display thread received signal" << endl;
+        jeu->afficher();
+        pthread_cond_wait(cond, mutex);
+    }
+
+    pthread_mutex_unlock(mutex);
 
     return NULL;
 }
@@ -161,33 +216,42 @@ int main()
     wait_for_clients(nb_clients, client_sockets);
     Jeu monjeu;
 
+    pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_t threads[nb_clients];
+
     for (int i = 0; i < nb_clients; i++)
     {
         thread_args *args = (thread_args *)malloc(sizeof(thread_args));
         args->client_socket = client_sockets[i];
         args->jeu = &monjeu;
+        args->color_to_play = (i == 1) ? WHITE : BLACK;
+        args->cond = &cond;
+        args->mutex = &mutex;
         pthread_create(&threads[i], NULL, server_thread, (void *)args);
     }
-    
+
     cout << "Game starting..." << endl;
     map<Color, int> socket_map = {{WHITE, client_sockets[1]},
                                   {BLACK, client_sockets[0]}};
 
-    // boucle de jeu, s'arrete à la fin de la partie
-    bool game_is_on(true);
-    do
+    pthread_t display;
+    display_args *args = (display_args *)malloc(sizeof(display_args));
+    args->jeu = &monjeu;
+    args->cond = &cond;
+    args->mutex = &mutex;
+    bool stop = false;
+    args->stop = &stop;
+    pthread_create(&display, NULL, display_thread, (void *)args);
+
+    for (int i = 0; i < nb_clients; i++)
     {
-        monjeu.afficher();
-        Color turn = monjeu.board->get_turn();
+        pthread_join(threads[i], NULL);
+    }
 
-        string move;
-        cin >> move;
-        game_is_on = monjeu.jouer(move);
+    pthread_join(display, NULL);
 
-    } while (game_is_on);
-    cout << endl;
-    monjeu.afficher_position_canonique();
+    free(args);
 
     close_clients(nb_clients, client_sockets);
     return 0;
