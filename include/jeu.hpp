@@ -4,6 +4,15 @@
 #include "board.hpp"
 #include "piece.hpp"
 
+enum Play_result
+{
+    VALID_MOVE,
+    INVALID_MOVE,
+    GAME_OVER,
+    VALID_COMMAND,
+    INVALID_COMMAND
+};
+
 /**
  * @brief The Jeu class represents a game of chess.
  */
@@ -32,7 +41,7 @@ public:
      */
     bool coup();
 
-    bool jouer(std::string mouvement);
+    Play_result jouer(std::string mouvement);
 
     /**
      * @brief The swap_player function swaps the current player.

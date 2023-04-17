@@ -153,7 +153,7 @@ public:
         @param dest The square where the piece should be moved to.
         @return The resulting state after the move.
         */
-    State move(Square orig, Square dest);
+    bool move(Square orig, Square dest);
     /**
         @brief Set the piece on a given square.
         @param square The square where the piece should be set.
@@ -167,7 +167,7 @@ public:
         */
     void move_piece_without_check(Square orig, Square dest);
     /**
-        @brief Verify if a checkmate or stalemate has occurred for a given color.
+        @brief Verify if a checkmate or stalemate has occurred for a given color. And set the state of the board accordingly.
         @param color The color to be verified.
         */
     void verify_checkmate_and_pat(Color color);

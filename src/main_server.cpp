@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define PORT 5201
+#define PORT 5206
 #define MAX_MSG_LEN 1024
 #define SERVER_IP "127.0.0.1"
 
@@ -98,11 +98,6 @@ int read_from_client(int client_socket, char buffer[MAX_MSG_LEN])
 
     buffer[bytes_read] = '\0';
 
-    if (send(client_socket, buffer, strlen(buffer), 0) == -1)
-    {
-        std::cerr << "Failed to send response to client\n";
-    }
-
     return EXIT_SUCCESS;
 }
 
@@ -119,15 +114,65 @@ string get_move_from_right_player(int client_socket)
     return move_str;
 }
 
+typedef struct
+{
+    int client_socket;
+    Jeu *jeu;
+} thread_args;
+
+void *server_thread(void *arg)
+{
+    thread_args *args = (thread_args *)arg;
+    int client_socket = args->client_socket;
+    Jeu *jeu = args->jeu;
+
+    char buffer[MAX_MSG_LEN];
+
+    while (true)
+    {
+        if (read_from_client(client_socket, buffer) == EXIT_FAILURE)
+        {
+            break;
+        }
+
+        cout << "Received: " << buffer << endl;
+        Play_result r = jeu->jouer(buffer);
+        switch (r)
+        {
+        case GAME_OVER:
+            send(client_socket, "GAME_OVER", 9, 0);
+            break;
+        case INVALID_MOVE:
+            send(client_socket, "INVALID_MOVE", 12, 0);
+            break;
+        case VALID_MOVE:
+            send(client_socket, "VALID_MOVE", 10, 0);
+            break;
+        }
+    }
+
+    return NULL;
+}
+
 int main()
 {
     int nb_clients = 2;
     int client_sockets[nb_clients];
     wait_for_clients(nb_clients, client_sockets);
+    Jeu monjeu;
 
+    pthread_t threads[nb_clients];
+    for (int i = 0; i < nb_clients; i++)
+    {
+        thread_args *args = (thread_args *)malloc(sizeof(thread_args));
+        args->client_socket = client_sockets[i];
+        args->jeu = &monjeu;
+        pthread_create(&threads[i], NULL, server_thread, (void *)args);
+    }
+    
+    cout << "Game starting..." << endl;
     map<Color, int> socket_map = {{WHITE, client_sockets[1]},
                                   {BLACK, client_sockets[0]}};
-    Jeu monjeu;
 
     // boucle de jeu, s'arrete à la fin de la partie
     bool game_is_on(true);
@@ -136,9 +181,9 @@ int main()
         monjeu.afficher();
         Color turn = monjeu.board->get_turn();
 
-        string move = get_move_from_right_player(socket_map[turn]);
+        string move;
+        cin >> move;
         game_is_on = monjeu.jouer(move);
-        
 
     } while (game_is_on);
     cout << endl;

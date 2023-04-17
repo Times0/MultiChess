@@ -5,7 +5,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define PORT 5201
+#include <cstring>
+
+using namespace std;
+#define PORT 5206
 #define MAX_MSG_LEN 1024
 
 int main(int argc, char *argv[])
@@ -69,7 +72,7 @@ int main(int argc, char *argv[])
 
         // Print received message
         msg[msg_len] = '\0';
-        std::cout << "Received response from server: " << msg << std::endl;
+        cout << "Received message: " << msg << endl;
     }
 
     // Close socket

@@ -277,36 +277,23 @@ bool Board::move_no_swap(Square orig, Square dest)
     return true;
 }
 
-State Board::move(Square orig, Square dest)
+bool Board::move(Square orig, Square dest)
 {
-    if (move_no_swap(orig, dest))
+    bool r;
+    if (r = move_no_swap(orig, dest))
     {
         Piece *piece = get_piece(dest);
         piece->set_has_moved();
         verify_checkmate_and_pat(turn == WHITE ? BLACK : WHITE);
-
-        if (state == CHECKMATE)
-        {
-            return CHECKMATE;
-        }
-        else if (state == PAT)
-        {
-            return PAT;
-        }
 
         if (turn == BLACK)
         {
             increment_fullmove_number();
         }
 
-        if (halfmove_clock >= 100)
-        {
-            return PAT;
-        }
-
         turn = (Color)(WHITE + BLACK - turn);
     }
-    return NORMAL;
+    return r;
 }
 
 void Board::set_piece(Square square, Piece *piece)
@@ -627,6 +614,12 @@ bool Board::is_square_attacked_by(Square square, Color color)
 
 void Board::verify_checkmate_and_pat(Color color)
 {
+    if (halfmove_clock >= 100)
+    {
+        state = PAT;
+        return;
+    }
+
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)

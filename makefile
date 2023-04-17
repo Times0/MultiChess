@@ -11,22 +11,23 @@ OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 CPPFLAGS := -Iinclude -MMD -MP
 CFLAGS   := -Wall
 LDFLAGS  := -Llib
-LDLIBS   := -lm
-
-.PHONY: all clean
+LDLIBS   := -lm -pthread
 
 
-all:
-	make client
-	make server
+
+all: $(EXE)
 
 client: src2/main_client.cpp
 	mkdir -p bin
 	g++ src2/main_client.cpp -o bin/client
 
-server: $(OBJ) | $(BIN_DIR)
+server: $(OBJ) | $(BIN_DIR) 
 	mkdir -p bin
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o bin/server
+
+$(EXE): $(OBJ) | $(BIN_DIR)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
 
 
 
