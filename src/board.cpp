@@ -280,7 +280,7 @@ bool Board::move_no_swap(Square orig, Square dest)
 bool Board::move(Square orig, Square dest)
 {
     bool r;
-    if (r = move_no_swap(orig, dest))
+    if ((r = move_no_swap(orig, dest)))
     {
         Piece *piece = get_piece(dest);
         piece->set_has_moved();

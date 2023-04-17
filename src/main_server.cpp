@@ -93,7 +93,7 @@ int read_from_client(int client_socket, char buffer[MAX_MSG_LEN])
     }
     else if (bytes_read == 0)
     {
-        std::cout << "Client disconnected" << std::endl;
+        cout << "Client disconnected" << endl;
         return EXIT_FAILURE;
     }
 
@@ -132,7 +132,6 @@ void *server_thread(void *arg)
     Jeu *jeu = args->jeu;
     Color player = args->color_to_play;
     pthread_cond_t *cond = args->cond;
-    pthread_mutex_t *mutex = args->mutex;
 
     char buffer[MAX_MSG_LEN];
 
@@ -140,10 +139,8 @@ void *server_thread(void *arg)
     {
         if (read_from_client(client_socket, buffer) == EXIT_FAILURE)
         {
-            break;
+            return NULL;
         }
-
-        cout << "Received: " << buffer << endl;
 
         if (player != jeu->board->get_turn())
         {
@@ -166,10 +163,11 @@ void *server_thread(void *arg)
             break;
         case VALID_MOVE:
             send(client_socket, "VALID_MOVE", 10, 0);
-            cout << "Sending signal" << endl;
             pthread_cond_signal(cond);
             break;
         case INVALID_COMMAND:
+            break;
+        case VALID_COMMAND:
             break;
         }
     }
@@ -182,8 +180,6 @@ typedef struct
     Jeu *jeu;
     pthread_cond_t *cond;
     pthread_mutex_t *mutex;
-
-    bool *stop;
 } display_args;
 
 void *display_thread(void *arg)
@@ -193,13 +189,9 @@ void *display_thread(void *arg)
     Jeu *jeu = args->jeu;
     pthread_cond_t *cond = args->cond;
     pthread_mutex_t *mutex = args->mutex;
-    bool *stop = args->stop;
 
-    pthread_mutex_lock(mutex);
-
-    while (!*stop)
+    while (true)
     {
-        cout << "Display thread received signal" << endl;
         jeu->afficher();
         pthread_cond_wait(cond, mutex);
     }
@@ -240,8 +232,6 @@ int main()
     args->jeu = &monjeu;
     args->cond = &cond;
     args->mutex = &mutex;
-    bool stop = false;
-    args->stop = &stop;
     pthread_create(&display, NULL, display_thread, (void *)args);
 
     for (int i = 0; i < nb_clients; i++)
@@ -249,10 +239,10 @@ int main()
         pthread_join(threads[i], NULL);
     }
 
-    pthread_join(display, NULL);
+    pthread_kill(display, 0);
 
     free(args);
 
-    close_clients(nb_clients, client_sockets);
+    // close_clients(nb_clients, client_sockets);
     return 0;
 }
