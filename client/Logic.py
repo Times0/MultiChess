@@ -35,6 +35,7 @@ class Logic:
         self.mark = list()  # en passant
 
         self.state = "game_on"
+        self.fen = self.get_fen()
 
     def load_fen(self, fen) -> None:
         board = []
@@ -57,6 +58,7 @@ class Logic:
             board.append(b_row)
             i += 1
             j = 0
+        self.fen = fen
 
         for i, part in enumerate(parts[1:]):
 
@@ -262,6 +264,8 @@ class Logic:
         self.board[i][j] = None
         self.board[dest_i][dest_j] = piece
         self.board[dest_i][dest_j].moved(dest_i, dest_j)
+
+        self.fen = self.get_fen()
         if switch_turn:
             self.switch_turn()
 

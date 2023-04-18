@@ -84,7 +84,6 @@ void close_clients(int nb_clients, int client_sockets[])
 
 int read_from_client(int client_socket, char buffer[MAX_MSG_LEN])
 {
-    cout << "Reading from client..." << endl;
     int bytes_read = recv(client_socket, buffer, MAX_MSG_LEN, 0);
     if (bytes_read == -1)
     {
@@ -117,7 +116,9 @@ string get_move_from_right_player(int client_socket)
 
 typedef struct
 {
-    int client_socket;
+    int *client_sockets;
+    int nb_clients;
+    int num_socket;
     Jeu *jeu;
     Color color_to_play;
     pthread_cond_t *cond;
@@ -128,10 +129,12 @@ typedef struct
 void *server_thread(void *arg)
 {
     thread_args *args = (thread_args *)arg;
-    int client_socket = args->client_socket;
     Jeu *jeu = args->jeu;
+    int nb_clients = args->nb_clients;
     Color player = args->color_to_play;
     pthread_cond_t *cond = args->cond;
+    pthread_mutex_t *mutex = args->mutex;
+    int client_socket = args->client_sockets[args->num_socket];
 
     char buffer[MAX_MSG_LEN];
 
@@ -149,32 +152,26 @@ void *server_thread(void *arg)
                 perror("send");
                 exit(EXIT_FAILURE);
             }
+
             continue;
         }
         Play_result r = jeu->jouer(buffer);
-        switch (r)
-        {
-        case GAME_OVER:
-            send(client_socket, "GAME_OVER", 9, 0);
-            return NULL;
-            break;
-        case INVALID_MOVE:
-            send(client_socket, "INVALID_MOVE", 12, 0);
-            break;
-        case VALID_MOVE:
-            send(client_socket, "VALID_MOVE", 10, 0);
-            pthread_cond_signal(cond);
-            break;
-        case INVALID_COMMAND:
-            send(client_socket, "INVALID_COMMAND", 15, 0);
-            break;
-        case VALID_COMMAND:
-            send(client_socket, "VALID_COMMAND", 13, 0);
-            break;
+        cout << "Play result: " << r << endl;
 
-        default:
-            send(client_socket, "INVALID", 7, 0);
-            break;
+        string fen = jeu->board->get_fen();
+        string to_send = "fen:" + fen;
+
+        pthread_cond_signal(cond);
+
+        // send to all clients the string to_send
+
+        for (int i = 0; i < nb_clients; i++)
+        {
+            if (send(args->client_sockets[i], to_send.c_str(), to_send.length(), 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
@@ -222,7 +219,9 @@ int main()
     for (int i = 0; i < nb_clients; i++)
     {
         thread_args *args = (thread_args *)malloc(sizeof(thread_args));
-        args->client_socket = client_sockets[i];
+        args->client_sockets = client_sockets;
+        args->nb_clients = nb_clients;
+        args->num_socket = i;
         args->jeu = &monjeu;
         args->color_to_play = (i == 1) ? WHITE : BLACK;
         args->cond = &cond;
