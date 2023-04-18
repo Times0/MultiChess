@@ -10,7 +10,7 @@
 #include <cstring>
 
 using namespace std;
-#define PORT 5000
+#define PORT 5001
 #define MAX_MSG_LEN 1024
 
 int connect_to_server(const char *SERVER_IP)

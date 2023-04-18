@@ -18,7 +18,7 @@ def main():
     win = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE, pygame.FULLSCREEN)
     game = Game(win, STARTINGPOSFEN)
     game.run()
-    
+    pygame.quit()    
     
 if __name__ == "__main__":
     main()

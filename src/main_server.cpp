@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define PORT 5000
+#define PORT 5001
 #define MAX_MSG_LEN 1024
 #define SERVER_IP "127.0.0.1"
 

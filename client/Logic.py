@@ -168,6 +168,12 @@ class Logic:
                             returnlist.append((i, j, legal[0], legal[1], legal[2]))
         return returnlist
 
+    def get_legal_moves_piece(self, i, j):
+        piece = self.piece_at(i, j)
+        if piece:
+            return piece.legal_moves(self)
+        return []
+
     def ordered_legal_moves(self, color):
         lm = self.legal_moves(color)
         shuffle(lm)
