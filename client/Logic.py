@@ -4,12 +4,24 @@ from random import shuffle
 import numpy as np
 from numpy import matrix, ndarray, sqrt
 
-from fonctions import isInbounds, other_color
-
 from typing import List, Tuple, Union
+import enum
+
+
+from pieces import Piece, Pawn, Rook, Knight, Bishop, Queen, King, piece_from_abreviation, Color
 
 format_cr = "KQkq"
 
+
+class State(enum.Enum):
+    GAMEON = 0
+    BLACKWINS = 1
+    WHITEWINS = 2
+    DRAW = 3 # 50 moves rule, stalemate
+
+
+class Piece:
+    pass
 
 class Logic:
     """ a Logic instance is an independant chess board that has every fonction needed to play the game like isMate(
@@ -26,7 +38,6 @@ class Logic:
         elif fen:
             # variables pour les privilèges de roquer
             self.castle_rights = "kqKQ"  # kingside, queenside
-            # ["game_on","blackwins", "whitewins", "stalemate"]
             self.board = [[None for _ in range(8)] for _ in range(8)]
             self.turn = "white"
             self.load_fen(fen)
@@ -34,7 +45,7 @@ class Logic:
             raise ArithmeticError
         self.mark = list()  # en passant
 
-        self.state = "game_on"
+        self.state = State.GAMEON
         self.fen = self.get_fen()
 
     def load_fen(self, fen) -> None:
@@ -52,7 +63,7 @@ class Logic:
                     j += int(c)
                 elif c.isalpha():
                     b_row.append(piece_from_abreviation(c, i, j))
-                    if c.upper() == "P" and i != (1 if b_row[-1].color == "black" else 6):
+                    if c.upper() == "P" and i != (1 if b_row[-1].color == Color.BLACK else 6):
                         b_row[-1].never_moved = False
                     j += 1
             board.append(b_row)
@@ -63,7 +74,7 @@ class Logic:
         for i, part in enumerate(parts[1:]):
 
             if i == 0:
-                self.turn = "white" if part == "w" else "black"
+                self.turn = Color.WHITE if part == "w" else Color.BLACK
 
             elif i == 1:
                 self.castle_rights = part
@@ -92,7 +103,7 @@ class Logic:
             j = 0
 
         board = "/".join(lines)
-        turn = self.turn[0]
+        turn = "w" if self.turn == Color.WHITE else "b"
         castle_rights = f"{self.castle_rights}"
 
         returnfen = " ".join([board, turn, castle_rights])
@@ -116,7 +127,6 @@ class Logic:
 
     def load_data(self, data):
 
-        # print("\n\nSTART ")
 
         L = list()
         for i in range(8):
@@ -156,9 +166,8 @@ class Logic:
                     L.extend(piece.attacking_squares(self))
         return list(set(L))
 
-    def legal_moves(self, color=""):
-        color = self.turn if color == "" else color
-        """origin, destination"""
+    def legal_moves(self, color=None):
+        color = self.turn if color is None else color
         returnlist = []
         for i in range(8):
             for j in range(8):
@@ -176,9 +185,8 @@ class Logic:
             return piece.legal_moves(self)
         return []
 
-    def ordered_legal_moves(self, color):
+    def ordered_legal_moves(self, color:Color):
         lm = self.legal_moves(color)
-        shuffle(lm)
         lm.sort(key=lambda tup: tup[4], reverse=True)
         return lm
 
@@ -209,22 +217,21 @@ class Logic:
     def isCheck(move):
         return move[4] == 2
 
-    def isIncheck(self, color: str) -> bool:
+    def isIncheck(self, color: Color) -> bool:
         i, j = self.king_coord(color)
         return (i, j) in self.cases_attacked_by(("white" if color == "black" else "black"))
 
-    def isMate(self, color: str) -> bool:
+    def isMated(self, color: Color) -> bool:
         return self.isIncheck(color) and not self.hasLegalmoves(color)
 
-    def isStalemate(self, color: str) -> bool:
+    def isStalemate(self, color: Color) -> bool:
         return not self.hasLegalmoves(color)
 
-    def update_game_state(self, color: str):
-        """ possible states : ["black wins","white wins","stalemate"]"""
-        if self.isMate(color):
-            self.state = "".join([other_color(color), "wins"])
+    def update_game_state(self, color: Color):
+        if self.isMated(color):
+            self.game_state = State.BLACKWINS if color == Color.WHITE else State.WHITEWINS
         elif self.isStalemate(color):
-            self.state = "draw"
+            self.game_state = State.STALEMATE
 
     def move(self, move, switch_turn=True) -> None:
         i, j, dest_i, dest_j, _ = move
@@ -349,267 +356,3 @@ class Logic:
 
         return str(matrix(returnboard))
 
-
-class Piece:
-    def __init__(self, color, i, j):
-        self.never_moved = True
-        self.color = color
-        self.i = i
-        self.j = j
-        self.abreviation = None
-    
-    def set_abreviation(self, name) -> None:
-        inv_map = {v: k for k, v in dico.items()}
-        abreviation = inv_map[name]
-        if self.color == "white":
-            abreviation = abreviation.upper()
-        self.abreviation = abreviation
-
-    def set_coord_weird(self, i, j) -> None:
-        self.i, self.j = i, j
-
-    def almost_legal_moves(self, board: Logic) -> list:
-        """Cette fonction est overriden pour chacune des pièces, elle renvoie les moves possible pour une pièce
-        en prenant en compte les autres pièces de l'échequier mais sans prendre en compte les échecs au roi"""
-        pass
-
-    def legal_moves(self, logic: Logic):
-        """ Returns the list of every almost legal move this piece has which means it does not care about checks,
-        checks are handled in  legal_moves
-         Format is (i, j, id) with id being 1 if it is a capture and ((2 if it is a check)) (else 0) """
-
-        returnlist = []
-        if self.color != logic.turn:
-            return []
-        for move in self.almost_legal_moves(logic):
-            virtual = Logic(fen=logic.get_fen())
-            true_move = self.i, self.j, *move
-            virtual.move(true_move)
-            if not virtual.isIncheck(self.color):
-                if virtual.isIncheck(other_color(self.color)):
-                    returnlist.append((move[0], move[1], 2))
-                else:
-                    returnlist.append(move)
-
-        return returnlist
-
-    def attacking_squares(self, logic) -> list:
-        """returns the list of every coordinates this piece is attacking/protecting, it is a bit different from
-        almos_legal moves since a protected piece is not attacked """
-        return [(e[0], e[1]) for e in self.almost_legal_moves(logic)]
-
-    def moved(self, dest_i, dest_j) -> None:
-        """Updates the info the piece has about itself"""
-        self.i, self.j = dest_i, dest_j
-        self.never_moved = False
-
-
-class Pawn(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 1
-        self.direction = -1 if self.color == 'white' else +1
-
-    def almost_legal_moves(self, board: Logic) -> list:
-
-        piece_at = board.piece_at
-        i, j = self.i, self.j
-        dir = self.direction
-        returnlist = []
-
-        # move devant
-        i1 = i + dir  # case devant le pion (relativement)
-        if isInbounds(i1, j) and not piece_at(i1, j):
-            returnlist.append((i1, j, 0))
-            if self.never_moved:
-                i2 = i1 + dir  # deux cases devant le pion
-                if isInbounds(i2, j) and not piece_at(i2, j):
-                    returnlist.append((i2, j, 0))
-
-        # captures
-        for ja in [j - 1, j + 1]:
-            if isInbounds(i1, ja) and piece_at(i1, ja) and piece_at(i1, ja).color != self.color:
-                returnlist.append((i1, ja, 1))
-
-        # en croissant
-        if i == (3 if self.color == "white" else 4):
-            for jb in [j - 1, j + 1]:
-                if isInbounds(i1, jb) and (i1, jb) in board.mark:
-                    returnlist.append((i1, jb, 1))
-
-        return returnlist
-
-    def attacking_squares(self, logic) -> list:
-        piece_at = logic.piece_at
-        i, j = self.i, self.j
-        dir = self.direction
-        i1 = i + dir
-        returnlist = []
-        # attacked squares
-        for j in [j - 1, j + 1]:
-            if isInbounds(i1, j) and (not piece_at(i1, j) or piece_at(i1, j).color != self.color):
-                returnlist.append((i1, j))
-        return returnlist
-
-
-class Bishop(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 2
-        # self.image = globals()[f"{self.abreviation}_image"]
-
-    def almost_legal_moves(self, board):
-        piece_at = board.piece_at
-        returnlist = []
-        i, j = self.i, self.j
-        for a, b in [[1, 1], [-1, 1], [1, -1], [-1, -1]]:
-            for n in range(1, 8):  # on ne teste pas la case sur laquelle il y a déjà notre pièce
-                i1, j1 = i + a * n, j + b * n
-                if isInbounds(i1, j1):
-                    piece = piece_at(i1, j1)
-                    if not piece:
-                        returnlist.append((i1, j1, 0))
-                    elif piece.color != self.color:
-                        returnlist.append((i1, j1, 1))
-                    if piece:
-                        break  # c'est cette ligne qui traduit la rupture de la 'ligne' si une pièce y est présente
-        return returnlist
-
-
-class Rook(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 3
-        # self.image = globals()[f"{self.abreviation}_image"]
-
-    def almost_legal_moves(self, board):
-        piece_at = board.piece_at
-        returnlist = []
-        i, j = self.i, self.j
-        for a, b in [[1, 0], [-1, 0], [0, -1], [0, 1]]:
-            for n in range(1, 8):  # on ne teste pas la case sur laquelle il y a déjà notre pièce
-                i1, j1 = i + a * n, j + b * n
-                if isInbounds(i1, j1):
-                    piece = piece_at(i1, j1)
-                    if not piece:
-                        returnlist.append((i1, j1, 0))
-                    elif piece.color != self.color:
-                        returnlist.append((i1, j1, 1))
-                    if piece:
-                        break  # rupture de la 'ligne' si une pièce y est présente
-        return returnlist
-
-
-class Knight(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 4
-        # self.image = globals()[f"{self.abreviation}_image"]
-
-    def almost_legal_moves(self, board):
-        piece_at = board.piece_at
-        i, j = self.i, self.j
-        returnlist = []
-        moves = list(product([i - 1, i + 1], [j - 2, j + 2])) + list(product([i - 2, i + 2], [j - 1, j + 1]))
-        # return [move for move in moves if
-        #         isInbounds(*move) and (not piece_at(*move) or piece_at(*move).color != self.color)]
-        for i1, j1 in moves:
-            if isInbounds(i1, j1):
-                piece = piece_at(i1, j1)
-                if not piece:
-                    returnlist.append((i1, j1, 0))
-                elif piece.color != self.color:
-                    returnlist.append((i1, j1, 1))
-        return returnlist
-
-
-class Queen(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 5
-        # self.image = globals()[f"{self.abreviation}_image"]
-
-    def almost_legal_moves(self, board):
-        piece_at = board.piece_at
-        returnlist = []
-        i, j = self.i, self.j
-        for a, b in [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [-1, 1], [1, -1], [-1, -1]]:
-            for n in range(1, 8):  # on ne teste pas la case sur laquelle il y a déjà notre pièce
-                i1, j1 = i + a * n, j + b * n
-                if isInbounds(i1, j1):
-                    piece = piece_at(i1, j1)
-                    if not piece:
-                        returnlist.append((i1, j1, 0))
-                    elif piece.color != self.color:
-                        returnlist.append((i1, j1, 1))
-                    if piece:
-                        break  # rupture de la 'ligne' si une pièce y est présente
-        return returnlist
-
-
-class King(Piece):
-    def __init__(self, color, i, j):
-        super().__init__(color, i, j)
-        self.set_abreviation(self.__class__)
-        self.value = 6
-        # self.image = globals()[f"{self.abreviation}_image"]
-
-    def almost_legal_moves(self, board):
-        piece_at = board.piece_at
-        returnlist = []
-
-        i, j = self.i, self.j
-        for a, b in [[-1, -1], [-1, 1], [-1, 0], [1, -1], [1, 1], [1, 0], [0, 1], [0, -1]]:
-            i1, j1 = i + a, j + b
-            if isInbounds(i1, j1):
-                piece = piece_at(i1, j1)
-                if not piece:
-                    returnlist.append((i1, j1, 0))
-                elif piece.color != self.color:
-                    returnlist.append((i1, j1, 1))
-
-        castle_rights = board.castle_rights
-        if self.color == "white":
-            rights = str([char for char in castle_rights if char.upper() == char])
-        else:
-            rights = str([char for char in castle_rights if char.lower() == char])
-        if rights:
-            i, j = (0, 4) if self.color == "black" else (7, 4)
-            if "k" in rights.lower():
-                if not piece_at(i, j + 1) and not piece_at(i, j + 2):
-                    attacked_cases = board.cases_attacked_by(other_color(self.color))
-                    if (i, j) not in attacked_cases and (i, j + 1) not in attacked_cases and (
-                            i, j + 2) not in attacked_cases and piece_at(i, 7):
-                        returnlist.append((i, j + 2, 0))
-            if "q" in rights.lower():
-                if not piece_at(i, j - 1) and not piece_at(i, j - 2) and not piece_at(i, j - 3):
-                    attacked_cases = board.cases_attacked_by(other_color(self.color))
-                    if (i, j) not in attacked_cases and (i, j - 1) not in attacked_cases and (
-                            i, j - 2) not in attacked_cases and piece_at(i, 0):
-                        returnlist.append((i, j - 2, 0))
-        return returnlist
-
-    def attacking_squares(self, logic):
-        piece_at = logic.piece_at
-        returnlist = []
-
-        i, j = self.i, self.j
-        for a, b in [[-1, -1], [-1, 1], [-1, 0], [1, -1], [1, 1], [1, 0], [0, 1], [0, -1]]:
-            i1, j1 = i + a, j + b
-            if isInbounds(i1, j1) and (not piece_at(i1, j1) or piece_at(i1, j1).color != self.color):
-                returnlist.append((i1, j1))
-        return returnlist
-
-
-dico = {"p": Pawn, "r": Rook, "b": Bishop, "n": Knight, "q": Queen, "k": King}
-dico2 = {0: None, 1: Pawn, 2: Bishop, 3: Rook, 4: Knight, 5: Queen, 6: King}
-values = {"p": 1, "r": 5, "b": 3, "n": 3, "q": 9, "k": 0}
-
-
-def piece_from_abreviation(abreviation, i, j):
-    return dico[abreviation.lower()]("black" if abreviation.lower() == abreviation else "white", i, j)

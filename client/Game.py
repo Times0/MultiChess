@@ -1,18 +1,12 @@
-import cProfile
-import multiprocessing
-import pstats
-
 import Button
-from Board import *
+from Board_ui import *
 from Logic import Logic
 from fonctions import *
 from constants import *
 from reseau import *
 import threading
 
-    
-
-
+  
 class Game:
     def __init__(self, win, fen):
         self.win = win
@@ -26,7 +20,7 @@ class Game:
         self.game_on = True
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((HOST, PORT))
+        #self.socket.connect((HOST, PORT))
 
         self.last_retrieved_fen = fen
 
@@ -50,8 +44,8 @@ class Game:
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
-                self.board.clicked(pos)
-                self.current_piece_legal_moves = self.logic.get_legal_moves_piece(*self.board.clicked_piece_coord)
+                if self.board.clicked(pos):
+                    self.current_piece_legal_moves = self.logic.get_legal_moves_piece(*self.board.clicked_piece_coord)
             
             if self.board.dragging:
                 if event.type == pygame.MOUSEMOTION:
@@ -68,7 +62,6 @@ class Game:
                             self.logic.real_move(self.board.clicked_piece_coord+ move+ (c,))
                             self.board.update(self.logic)
                             
-   
     def draw(self):
         self.win.fill(BLACK)
         self.board.draw(self.win, self.current_piece_legal_moves, *BOARDTOPLEFTPOS)
