@@ -1,3 +1,7 @@
+class Color:
+    pass
+
+
 def isInrectangle(pos, pos0, width, height):
     """
     Returns True if the point defined by the position is in the rectangle
@@ -14,5 +18,6 @@ def isInbounds(i, j):
     return 0 <= i <= 7 and 0 <= j <= 7
 
 
-def other_color(color):
-    return "white" if color == "black" else "black"
+def other_color(color: Color):
+    from pieces import Color
+    return Color.WHITE if color == Color.BLACK else Color.BLACK

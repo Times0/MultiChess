@@ -1,4 +1,2 @@
 pygame
 numpy
-screeninfo
-pathos

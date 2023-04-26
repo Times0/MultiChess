@@ -1,5 +1,6 @@
-from pygame import image
+import os
 
+from pygame import image
 
 # Colors
 BLACK = 0, 0, 0
@@ -19,27 +20,30 @@ CASECOLOR2 = LIGHTBEIGE
 WIDTH, HEIGHT = 1200, 800
 MIDW = WIDTH // 2
 MIDH = HEIGHT // 2
-BOARDSIZE = HEIGHT * 0.8
+BOARDSIZE = int(HEIGHT * 0.8)
 BOARDTOPLEFTPOS = (MIDW - BOARDSIZE // 2, MIDH - BOARDSIZE // 2)
+CASESIZE = BOARDSIZE // 8
 
 # Pieces
 
-P_image = image.load(r"assets/row-1-col-6.png")  # white
-R_image = image.load(r"assets/row-1-col-5.png")
-N_image = image.load(r"assets/row-1-col-4.png")
-B_image = image.load(r"assets/row-1-col-3.png")
-Q_image = image.load(r"assets/row-1-col-2.png")
-K_image = image.load(r"assets/row-1-col-1.png")
+dir = os.path.dirname(__file__)
+P_image = image.load(fr"{dir}/assets/row-1-col-6.png")  # white
+R_image = image.load(fr"{dir}/assets/row-1-col-5.png")  # white
+N_image = image.load(fr"{dir}/assets/row-1-col-4.png")  # white
+B_image = image.load(fr"{dir}/assets/row-1-col-3.png")  # white
+Q_image = image.load(fr"{dir}/assets/row-1-col-2.png")  # white
+K_image = image.load(fr"{dir}/assets/row-1-col-1.png")  # white
 
-p_image = image.load(r"assets/row-2-col-6.png")  # black
-r_image = image.load(r"assets/row-2-col-5.png")
-n_image = image.load(r"assets/row-2-col-4.png")
-b_image = image.load(r"assets/row-2-col-3.png")
-q_image = image.load(r"assets/row-2-col-2.png")
-k_image = image.load(r"assets/row-2-col-1.png")
+p_image = image.load(fr"{dir}/assets/row-2-col-6.png")  # black
+r_image = image.load(fr"{dir}/assets/row-2-col-5.png")  # black
+n_image = image.load(fr"{dir}/assets/row-2-col-4.png")  # black
+b_image = image.load(fr"{dir}/assets/row-2-col-3.png")  # black
+q_image = image.load(fr"{dir}/assets/row-2-col-2.png")  # black
+k_image = image.load(fr"{dir}/assets/row-2-col-1.png")  # black
 
 # other
-STARTINGPOSFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"
+STARTINGPOSFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
 fen1 = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
 fencheck = "rnbqkbnr/pppppppp/5K2/8/8/8/PPPPPPPP/RNBQ1BNR w kq - 0 1"
 fenmate = "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
@@ -60,4 +64,3 @@ fenmate3 = ["6B1/p1Q4p/2P2ppk/8/4P3/4qP2/1r4rP/2R2R1K b - - 3 29"]
 testmate = "8/8/8/4k3/8/8/3Q4/2K5 w - - 0 1"
 
 fen_pb = "r1bqkbnr/ppp2pp1/2n5/3p3p/2B1Pp2/5N2/PPPP2PP/RNBQR1K1 w kq - 0 7"
-
