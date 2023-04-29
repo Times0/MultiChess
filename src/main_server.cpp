@@ -123,8 +123,18 @@ typedef struct
     Color color_to_play;
     pthread_cond_t *cond;
     pthread_mutex_t *mutex;
+    int *stop;
 
 } thread_args;
+
+void my_send(string msg, int socket)
+{
+    if (send(socket, msg.c_str(), msg.length(), 0) == -1)
+    {
+        perror("send");
+        exit(EXIT_FAILURE);
+    }
+}
 
 void *server_thread(void *arg)
 {
@@ -135,11 +145,24 @@ void *server_thread(void *arg)
     pthread_cond_t *cond = args->cond;
     pthread_mutex_t *mutex = args->mutex;
     int client_socket = args->client_sockets[args->num_socket];
-
     char buffer[MAX_MSG_LEN];
+
+    // send to client the color he will play
+    string color_str = "color:";
+    color_str += player == WHITE ? "white" : "black";
+    color_str += "\n";
+    my_send(color_str, client_socket);
+
+    string init_fen = jeu->board->get_fen();
+    my_send("fen:" + init_fen + "", client_socket);
 
     while (true)
     {
+        if (*args->stop)
+        {
+            break;
+        }
+
         if (read_from_client(client_socket, buffer) == EXIT_FAILURE)
         {
             return NULL;
@@ -159,19 +182,25 @@ void *server_thread(void *arg)
         cout << "Play result: " << r << endl;
 
         string fen = jeu->board->get_fen();
-        string to_send = "fen:" + fen;
+        string to_send = "fen:" + fen + "\n";
 
         pthread_cond_signal(cond);
 
-        // send to all clients the string to_send
-
+        // send to all clients the new fen representing the board
         for (int i = 0; i < nb_clients; i++)
         {
-            if (send(args->client_sockets[i], to_send.c_str(), to_send.length(), 0) == -1)
+            my_send(to_send, args->client_sockets[i]);
+            if (r == GAME_OVER)
             {
-                perror("send");
-                exit(EXIT_FAILURE);
+                my_send("info: SERVER STOP\n", args->client_sockets[i]);
             }
+        }
+
+        if (r == GAME_OVER)
+        {
+            cout << "Game is over, terminating server thread nb " << args->num_socket << endl;
+            *args->stop = 1;
+            break;
         }
     }
 
@@ -215,6 +244,7 @@ int main()
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_t threads[nb_clients];
+    int stop = 0;
 
     for (int i = 0; i < nb_clients; i++)
     {
@@ -226,6 +256,7 @@ int main()
         args->color_to_play = (i == 1) ? WHITE : BLACK;
         args->cond = &cond;
         args->mutex = &mutex;
+        args->stop = &stop;
         pthread_create(&threads[i], NULL, server_thread, (void *)args);
     }
 
@@ -245,10 +276,10 @@ int main()
         pthread_join(threads[i], NULL);
     }
 
-    pthread_kill(display, 0);
-
     free(args);
 
-    // close_clients(nb_clients, client_sockets);
+    pthread_kill(display, 0);
+    cout << "Game over, closing" << endl;
+    close_clients(nb_clients, client_sockets);
     return 0;
 }
