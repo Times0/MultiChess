@@ -1,0 +1,15 @@
+# teste les mouvements simples de pion (pas de prise en passant).
+# teste avancée 1 case, 2 cases, prise.
+e2e4 
+e7e5
+d2d4 
+e5d4
+f2f3 
+d4d3
+c2d3 
+d7d5
+e4e5 
+d5d4
+/quit
+
+wR,wN,wB,wQ,wK,wB,wN,wR,wP,wP,,,,,wP,wP,,,,wP,,wP,,,,,,bP,,,,,,,,,wP,,,,,,,,,,,,bP,bP,bP,,,bP,bP,bP,bR,bN,bB,bQ,bK,bB,bN,bR, ?-?

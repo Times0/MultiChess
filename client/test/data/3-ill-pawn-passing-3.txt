@@ -1,0 +1,27 @@
+# Another test of illegal pawn passing capture because the capture
+# does not occur immediately after. 
+# White capture attempt e5d6 on half-move #7 is illegal since black pawn
+# moved d7d5 on half-move #4.
+
+# === PGN Format ===
+# 1. e4 Nc6
+# 2. e5 d5
+# 3. Nf3 e6
+# 4. d4 ?-?
+
+
+#=== Raw Format ===
+e2e4
+b8c6
+e4e5
+d7d5
+g1f3
+e7e6
+# next move is illegal sonce 
+e5d6
+# so, white again
+d2d4
+/quit
+
+
+wR,wN,wB,wQ,wK,wB,,wR,wP,wP,wP,,,wP,wP,wP,,,,,,wN,,,,,,wP,,,,,,,,bP,wP,,,,,,bN,,bP,,,,bP,bP,bP,,,bP,bP,bP,bR,,bB,bQ,bK,bB,bN,bR, ?-?

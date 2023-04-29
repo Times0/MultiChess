@@ -1,0 +1,29 @@
+# teste la détection d'erreur de mouvement de la tour
+# mvt blanc illegal car pion
+a1a2
+# blanc encore
+a2a4
+# mvt noir illegal car pion obstacle
+a8a5
+# noir encore
+b7b5
+a4b5
+a7a5
+# mvt blanc illegal (geometrie)
+a1b4
+# blanc encore
+a1a4
+# mvt noir illegal car cavalier obstacle
+a8b8
+a8a7
+a4f4
+/quit
+
+
+# === Partie ===
+# 1. a2a4 b7b5
+# 2. a4b5 a7a5
+# 3. a1a4 a8a7
+# 4. a4f4 
+
+,wN,wB,wQ,wK,wB,wN,wR,,wP,wP,wP,wP,wP,wP,wP,,,,,,,,,,,,,,wR,,,bP,wP,,,,,,,,,,,,,,,bR,,bP,bP,bP,bP,bP,bP,,bN,bB,bQ,bK,bB,bN,bR, ?-?

@@ -1,0 +1,11 @@
+# teste le petit roque blanc. Tous les mouvements sont légaux.
+e2e4
+e7e5
+f1c4
+g8f6
+g1f3
+f8c5
+O-O
+/quit
+
+wR,wN,wB,wQ,,wR,wK,,wP,wP,wP,wP,,wP,wP,wP,,,,,,wN,,,,,wB,,wP,,,,,,bB,,bP,,,,,,,,,bN,,,bP,bP,bP,bP,,bP,bP,bP,bR,bN,bB,bQ,bK,,,bR, ?-?

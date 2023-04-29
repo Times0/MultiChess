@@ -1,0 +1,16 @@
+a2a4
+b7b5
+a4b5
+a7a5
+a1a3
+a5a4
+a3c3
+a4a3
+h2h3
+a3a2
+h3h4
+a2a1
+Q
+/quit
+
+bQ,wN,wB,wQ,wK,wB,wN,wR,,wP,wP,wP,wP,wP,wP,,,,wR,,,,,,,,,,,,,wP,,wP,,,,,,,,,,,,,,,,,bP,bP,bP,bP,bP,bP,bR,bN,bB,bQ,bK,bB,bN,bR, ?-?

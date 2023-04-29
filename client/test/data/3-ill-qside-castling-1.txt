@@ -1,0 +1,32 @@
+# 
+# Test illegal move 16. O-O-O  as queen-side castling would put white king at chess. 
+#
+# === PGN Format ===
+# 1. d4 e6
+# 2. Nf3 d5
+# 3. Bg5 Nf6
+# 4. Nc3 h6
+# 5. Bg5xf6 Qd8xf6
+# 6. Qd3 Bb4
+# 7. Ne5 Qg5
+# ?-?
+# === Raw Format ===
+d2d4
+e7e6
+g1f3
+d7d5
+c1g5
+g8f6
+b1c3
+h7h6
+g5f6
+d8f6
+d1d3
+f8b4
+f3e5
+f6g5
+# next move should be rejected
+O-O-O
+/quit
+
+wR,,,,wK,wB,,wR,wP,wP,wP,,wP,wP,wP,wP,,,wN,wQ,,,,,,bB,,wP,,,,,,,,bP,wN,,bQ,,,,,,bP,,,bP,bP,bP,bP,,,bP,bP,,bR,bN,bB,,bK,,,bR, ?-?

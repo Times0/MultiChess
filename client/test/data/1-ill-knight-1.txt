@@ -1,0 +1,20 @@
+# teste la détection d'erreur de mouvement cavalier.
+# mvt blanc illegal car pion
+b1d2
+# blanc encore
+b1c3
+# mvt noir illegal car pion
+g8e7
+# noir encore
+g8f6
+# mvt blanc illegal (geometrie)
+c3b4
+#blanc encore
+c3e4
+/quit
+
+# === Partie ===
+# 1. b1c3 g8f6
+# 2. c3e4 
+
+wR,,wB,wQ,wK,wB,wN,wR,wP,wP,wP,wP,wP,wP,wP,wP,,,,,,,,,,,,,wN,,,,,,,,,,,,,,,,,bN,,,bP,bP,bP,bP,bP,bP,bP,bP,bR,bN,bB,bQ,bK,bB,,bR, ?-?

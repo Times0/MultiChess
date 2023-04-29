@@ -1,0 +1,21 @@
+# teste des mouvements légaux de cavaliers blancs et noirs, 
+# avec et sans prise. Echec par cavalier apres 4. Nd5xf6+
+#=== PGN Format ===
+# 1. Nc3 d5
+# 2. Nc3xd5 Nf6
+# 3. Nf3 Nc6
+# 4. Nd5xf6+ e7xf6
+# 5. e4 
+#
+b1c3
+d7d5
+c3d5
+g8f6
+g1f3
+b8c6
+d5f6
+e7f6
+e2e4
+/quit
+
+wR,,wB,wQ,wK,wB,,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,wN,,,,,,,wP,,,,,,,,,,,,,,bN,,,bP,,,bP,bP,bP,,,bP,bP,bP,bR,,bB,bQ,bK,bB,,bR, ?-?

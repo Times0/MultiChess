@@ -1,0 +1,10 @@
+e2e4
+e7e5
+f1c4
+f8c5
+d1h5
+b8c6
+h5f7
+/quit
+
+wR,wN,wB,,wK,,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,wB,,wP,,,,,,bB,,bP,,,,,,bN,,,,,,bP,bP,bP,bP,,wQ,bP,bP,bR,,bB,bQ,bK,,bN,bR, 1-0
