@@ -1,5 +1,4 @@
-#ifndef SQUARE
-#define SQUARE
+#pragma once
 
 #include <string>
 class Square
@@ -32,5 +31,3 @@ public:
     std::string get_fen();
     ~Square();
 };
-
-#endif

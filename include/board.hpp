@@ -4,8 +4,7 @@
     @brief Header file for the Board class.
     */
 
-#ifndef BOARD_HPP
-#define BOARD_HPP
+#pragma once
 
 #include <vector>
 #include <map>
@@ -226,5 +225,3 @@ public:
 
     Board *clone();
 };
-
-#endif

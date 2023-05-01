@@ -1,9 +1,7 @@
-#ifndef PLAYER
-#define PLAYER
+#pragma once
+
 enum Color
 {
     WHITE,
     BLACK
 };
-
-#endif

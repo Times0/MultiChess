@@ -1,5 +1,4 @@
-#ifndef PIECE
-#define PIECE
+#pragma once
 #include <string>
 #include <vector>
 
@@ -133,5 +132,3 @@ public:
 
 private:
 };
-
-#endif
