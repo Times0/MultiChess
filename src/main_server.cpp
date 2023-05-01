@@ -150,7 +150,7 @@ void *server_thread(void *arg)
     // send to client the color he will play
     string color_str = "color:";
     color_str += player == WHITE ? "white" : "black";
-    color_str += "\n";
+    color_str += '\n';
     my_send(color_str, client_socket);
 
     string init_fen = jeu->board->get_fen();

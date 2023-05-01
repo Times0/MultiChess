@@ -1,8 +1,10 @@
-import pygame
+import pygame as pg
 
+pg.font.init()
+FONT = pg.font.Font(None, 25)
 
-class TextButton(pygame.sprite.Sprite):
-    def __init__(self, text, x, y, font, font_color):
+class TextButton(pg.sprite.Sprite):
+    def __init__(self, text, x, y, font_color,font=FONT):
         super().__init__()
         self.text = text
         self.x = x
@@ -12,7 +14,7 @@ class TextButton(pygame.sprite.Sprite):
         self.rect = self.text_surface.get_rect(topleft=(x, y))
 
     def tick(self) -> bool:
-        return self.isMouseOn(pygame.mouse.get_pos())
+        return self.isMouseOn(pg.mouse.get_pos())
 
     def isMouseOn(self, pos) -> bool:
         return self.rect.collidepoint(*pos)

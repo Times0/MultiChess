@@ -6,7 +6,10 @@ from tools.button import TextButton
 from reseau import *
 import tools.text_input as text_input
 import random
+import time
+import logging
 
+logging.basicConfig(level=logging.INFO)        
 
 COLOR_CHANGING = (0, 85, 170)
 class Game:
@@ -23,14 +26,20 @@ class Game:
 
         # Buttons
         self.buttons = []
-        self.btn_new_game = TextButton("New Game", 10, 50, pygame.font.SysFont("Arial", 32), WHITE)
-        self.btn_flip_board = TextButton("Flip Board", 10, 100, pygame.font.SysFont("Arial", 32), WHITE)
-        self.buttons.extend((self.btn_new_game, self.btn_flip_board))
+        self.btn_new_game = TextButton("New Game", 10, 50, WHITE)
+        self.btn_flip_board = TextButton("Flip Board", 10, 100, WHITE)
+        self.btn_retry_connection = TextButton("Retry Connection", 10, 150, WHITE)
+        self.buttons.extend((self.btn_new_game, self.btn_flip_board, self.btn_retry_connection))
 
         # Entry
-        self.entry_ip = text_input.InputBox(text = "127.0.01")
-        self.entry_port = text_input.InputBox(text = "5001")
+        self.entry_ip = text_input.InputBox(text = "127.0.01", width=None)
+        self.entry_port = text_input.InputBox(text = "5001", width=100)
         
+        # Labels
+        self.label_enter_ip = pygame.font.SysFont("None", 25).render(f"server IP : ", True, WHITE)
+        self.label_enter_port = pygame.font.SysFont("None", 25).render(f"server port : ", True, WHITE)
+
+
 
         # Server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,7 +60,7 @@ class Game:
         clock = pygame.time.Clock()
         while self.window_on:
             clock.tick(60)
-            print(f"Fps: {clock.get_fps()}", end="\r")
+            print("FPS : ", clock.get_fps(), end="\r")
             self.events()
             self.update_board_if_new_info()
             self.draw()
@@ -64,6 +73,7 @@ class Game:
             if event.type == pygame.QUIT:
                 self.window_on = False
                 self.game_on = False
+                self.connected_to_server = False
                 self.socket.close()
 
             self.check_buttons(events)
@@ -95,7 +105,7 @@ class Game:
     def play(self, move):
         if not self.connected_to_server:
             return
-        print(f"Sending move: {move.get_uci()} to server")
+        logging.info(f"Sending move: {move.get_uci()} to server")
         send_move_to_server(self.socket,move.get_uci())
 
     def check_buttons(self, events):
@@ -103,7 +113,6 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_new_game.tick():
                     exit()
-                    print("New game")
                     self.bot_is_thinking = False
                     self.logic = Logic(STARTINGPOSFEN)
                     self.board.update(self.logic)
@@ -111,10 +120,13 @@ class Game:
                     self.current_piece_legal_moves = []
                 if self.btn_flip_board.tick():
                     self.board.flip_board()
+                if self.btn_retry_connection.tick():
+                    self.server_thread = threading.Thread(target=self.listen_server)
+                    self.server_thread.start()
 
     def check_end(self):
         if self.logic.state != State.GAMEON:
-            print(self.logic.state)
+            logging.info(self.logic.state)
             self.game_on = False
 
     def draw(self):
@@ -135,13 +147,11 @@ class Game:
             s = "Playing as black"
 
         if self.color is None and not self.waiting_for_opponent:
-            label_enter_ip = pygame.font.SysFont("Arial", 15).render(f"Enter server IP : ", True, WHITE)
-            label_enter_port = pygame.font.SysFont("Arial", 15).render(f"Enter server port : ", True, WHITE)
-            self.win.blit(label_enter_ip, (10, H - 60))
-            self.win.blit(label_enter_port, (10, H - 30))
+            self.win.blit(self.label_enter_ip, (10, H - 60))
+            self.win.blit(self.label_enter_port, (10, H - 30))
 
-            self.entry_ip.draw(self.win, *(10 + label_enter_ip.get_width(), H - 60))
-            self.entry_port.draw(self.win, *(10 + label_enter_port.get_width(), H - 30))
+            self.entry_ip.draw(self.win, 10 + self.label_enter_ip.get_width(), H - 60)
+            self.entry_port.draw(self.win, 10 + self.label_enter_port.get_width(), H - 30)
         
         if self.waiting_for_opponent:
             label = pygame.font.SysFont("Arial", 50).render(f"Waiting for opponent", True, self.color_zougou)
@@ -156,55 +166,73 @@ class Game:
         old_fen = self.logic.get_fen()
         new_fen = self.last_retrieved_fen
         if new_fen != old_fen:
-            print(f"Updating fen from {old_fen} to {new_fen}")
+            logging.debug(f"Updating fen from {old_fen} to {new_fen}")
             self.logic = Logic(new_fen)
             self.board.update(self.logic)
             self.current_piece_legal_moves = []
-            
-    def listen_server(self):
-        import time
-        should_run = True
 
+
+       
+    def listen_server(self):
+        """
+        Runs in a thread and listens to the server
+        """
+        should_run = True
+        max_attempts = 10
+        delay = 2
         while should_run:
-            time.sleep(2)
+            
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            while True:
-                self.ip = self.entry_ip.text
-                try:
-                    self.port = int(self.entry_port.text)
-                except:
-                    self.port = 0
-                if self.ip == "" or self.port == 0:
-                    continue # no ip or port no need to try to connect
-                try:
-                    print(f"Trying to connect to {self.ip}:{self.port}...")
-                    r= self.socket.connect_ex((self.ip, self.port))
-                    if r == 0:
-                        break
-                except:
-                    pass
+            time.sleep(2)
+            attempts = 0
+
+            while attempts < max_attempts:
                 if not self.window_on:
-                    return
-                time.sleep(5)
-            
-            print("Connected to server")
+                    should_run = False
+                    break
+                try:
+                    s = self.socket
+                    ip = self.entry_ip.get_text()
+                    port = int(self.entry_port.get_text())
+                    logging.info(f"Trying to connect to {ip}:{port}")
+                    r = s.connect_ex((ip, port))
+                    if r != 0:
+                        raise Exception("Connection failed")
+                    break # exit the function after a successful connection
+                except Exception as e:
+                    attempts += 1
+                    logging.debug(f"Attempt {attempts} failed: {e}")
+                    time.sleep(delay)
+
+            if attempts == max_attempts:
+                logging.error(f"Failed to connect to {ip}:{port}, max attempts reached")
+                should_run = False
+                break
+            logging.info(f"Conection to {ip}:{port} established")
+            self.connected_to_server = True
             self.waiting_for_opponent = True
-            
+
+
             server_on = True
             while server_on:
-                data = self.socket.recv(1024)
-                if not data:
+                if not self.window_on:
                     should_run = False
+                    break
+                try:
+                    data = self.socket.recv(1024)
+                except Exception as e:
+                    logging.info(f"Server stopped working: {e}")
                     server_on = False
                     break
-                
+                if not data:
+                    should_run = False
+                    break
                 data = data.decode()
                 liste = data.split("\n")
-
                 for line in liste:
                     if line.startswith("color:"):
                         color = line[6:]
-                        print(f"Recieved color: {color}")
+                        logging.debug(f"Recieved color: {color}")
                         if color == "white":
                             self.color = Color.WHITE
                             self.board.flipped = False
@@ -212,7 +240,7 @@ class Game:
                             self.color = Color.BLACK
                             self.board.flipped = True
                         else:
-                            print("Invalid color")
+                            logging.error("Invalid color")
                             exit()
                         self.waiting_for_opponent = False
                         self.connected_to_server = True
@@ -222,12 +250,19 @@ class Game:
                     elif line.startswith("info:"):
                         type_info = line[5:].strip()
                         if type_info == "SERVER STOP":
+                            logging.info("Server stopped")
                             self.color = None
                             self.connected_to_server = False
                             self.waiting_for_opponent = False
                             server_on = False
                             self.socket.close()
-                        print(f"ALERT {line}")
+                            break    
                     else:
-                        print(f"Received {line!r}")
+                        logging.error(f"Received <<{line!r}>> which was not understood")
+        
+        self.socket.close()
+        logging.info("Server listener stopped")
+
+
+
 
