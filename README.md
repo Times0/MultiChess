@@ -16,5 +16,6 @@ pip install -r requirements.txt
 ```
 Then you can run the client with the following commands :
 ```bash
+cd client
 python main.py
 ```
