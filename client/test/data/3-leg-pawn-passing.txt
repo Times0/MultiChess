@@ -1,0 +1,10 @@
+# teste la prise en passant. Le dernier mouvement e5f6 est legal.
+# 
+e2e4 
+c7c5
+e4e5 
+f7f5 
+e5f6
+/quit
+
+wR,wN,wB,wQ,wK,wB,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,,,,,,,,,,,,,,bP,,,,,,,,,,,wP,,,bP,bP,,bP,bP,,bP,bP,bR,bN,bB,bQ,bK,bB,bN,bR, ?-?

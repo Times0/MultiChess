@@ -1,0 +1,83 @@
+# === PGN Format ===
+# 1. e4 e5
+# 2. f4 d5
+# 3. Nc3 d4
+# 4. Ne2 Bb4
+# 5. f5 Nc6
+# 6. c3 d4xc3
+# 7. Ne2xc3 f6
+# 8. g4 Nd4
+# 9. d3 Ne7
+# 10. g5 Qd6
+# 11. a3 Bb4xc3+
+# 12. b2xc3 Nb5
+# 13. Ne2 O-O
+# 14. g6 Bd7
+# 15. d4 e5xd4
+# 16. Ne2xd4 Nb5xd4
+# 17. Qh5 h6
+# 18. c3xd4 Qd6xd4
+# 19. Ra2 Qd4xe4+
+# 20. Re2 Qe4xh1
+# 21. Re2xe7 Re8
+# 22. Re7xe8 Rf8xe8+
+# 23. Kf2 Bc6
+# 24. Bc1xh6 g7xh6
+# 25. Bc4+ Kh8
+# 26. Qh5xh6 1-0
+# === Raw Format ===
+e2e4
+e7e5
+f2f4
+d7d5
+b1c3
+d5d4
+c3e2
+f8b4
+f4f5
+b8c6
+c2c3
+d4c3
+e2c3
+f7f6
+g2g4
+c6d4
+d2d3
+g8e7
+g4g5
+d8d6
+a2a3
+b4c3
+b2c3
+d4b5
+g1e2
+O-O
+g5g6
+c8d7
+d3d4
+e5d4
+e2d4
+b5d4
+d1h5
+# following move of the king is ilegal, put it at chess
+g8f7
+h7h6
+c3d4
+d6d4
+a1a2
+d4e4
+a2e2
+e4h1
+e2e7
+a8e8
+e7e8
+f8e8
+e1f2
+d7c6
+c1h6
+g7h6
+f1c4
+g8h8
+h5h6
+
+,,,,,,,bQ,,,,,,wK,,wP,wP,,,,,,,,,,wB,,,,,,,,,,,wP,,,,,bB,,,bP,wP,wQ,bP,bP,bP,,,,,,,,,,bR,,,bK, 1-0

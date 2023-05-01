@@ -1,0 +1,26 @@
+# Partie stupide.
+# Un pion blanc arrive a promotion sur Tour en g8.
+# Promotion en tour provoque mat roi noir.
+
+# === PGN Format ===
+# 1. e4 f5
+# 2. e4xf5 g5
+# 3. Qf3 Bg7
+# 4. f6 Nh6
+# 5. f6xg7 Ng4
+# 6. g7xh8=R 1-0
+# === Raw Format ===
+e2e4
+f7f5
+e4f5
+g7g5
+d1f3
+f8g7
+f5f6
+g8h6
+f6g7
+h6g4
+g7h8
+R
+
+wR,wN,wB,,wK,wB,wN,wR,wP,wP,wP,wP,,wP,wP,wP,,,,,,wQ,,,,,,,,,bN,,,,,,,,bP,,,,,,,,,,bP,bP,bP,bP,bP,,,bP,bR,bN,bB,bQ,bK,,,wR, 1-0

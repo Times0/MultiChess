@@ -1,0 +1,30 @@
+# teste la détection de mouvements illégaux pour le petit roque blanc.
+e2e4
+e7e5
+f1c4
+# coup suivant noir illegal
+O-O
+# noir encore
+g8f6
+# coup suivant blanc illegal
+O-O
+# blanc encore
+g1f3
+f8b4
+O-O
+# le roi noir bouge
+e8e7
+a2a3
+# mouvement noir suivant illegal car roi noir n'est pas en place
+O-O
+# noir encore
+e7e8
+a3b4
+# mouvement noir suivant illegal car roi noir a déjà fait un mouvement (e8e7)
+# donc même si le roi est à la bonne place, le roque est interdit.
+O-O
+# donc aux noirs encore de jouer
+h7h6
+/quit
+
+wR,wN,wB,wQ,,wR,wK,,,wP,wP,wP,,wP,wP,wP,,,,,,wN,,,,wP,wB,,wP,,,,,,,,bP,,,,,,,,,bN,,bP,bP,bP,bP,bP,,bP,bP,,bR,bN,bB,bQ,bK,,,bR, ?-?

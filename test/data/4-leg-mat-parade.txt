@@ -1,0 +1,37 @@
+# Tous les mouvements sont legaux
+# Teste un mat qui peut être paré après De5, 
+# par 5. ... Fe7, ou 5. ... Ce7, ou 5. ... De7 
+# Le dernier demi-coup noir est donc légal et ne devrait pas
+# prononcer de MAT.
+e2e4
+e7e5
+d2d4
+e5d4
+c1g5
+a7a6
+d1d4
+c7c6
+d4e5
+# le coup suivant 5. ... Fe7 pare le mat
+f8e7
+b1c3
+c6c5
+c3d5
+b8c6
+# echec RN par cavalier au coup suivant
+d5c7
+# seul mouvement de fuite possible sauf prise Cc7 par DN
+e8f8
+g5e7
+g8e7
+e5d6
+a8b8
+f1c4
+g7g6
+d6f6
+d8c7
+# coup suivant mat le RN
+f6f7
+/quit
+
+wR,,,,wK,,wN,wR,wP,wP,wP,,,wP,wP,wP,,,,,,,,,,,wB,,wP,,,,,,bP,,,,,,bP,,bN,,,,bP,,,bP,bQ,bP,bN,wQ,,bP,,bR,bB,,,bK,,bR, 1-0

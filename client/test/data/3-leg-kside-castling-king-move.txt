@@ -1,0 +1,13 @@
+e2e4
+e7e5
+g1f3
+f8b4
+f1b5
+g8f6
+O-O
+O-O
+g1h1
+g8h8
+/quit
+
+wR,wN,wB,wQ,,wR,,wK,wP,wP,wP,wP,,wP,wP,wP,,,,,,wN,,,,bB,,,wP,,,,,wB,,,bP,,,,,,,,,bN,,,bP,bP,bP,bP,,bP,bP,bP,bR,bN,bB,bQ,,bR,,bK, ?-?

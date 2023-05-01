@@ -1,0 +1,30 @@
+# Check that we do not end in a mate after d1h5 (6. Qh5+)
+# There is no square for the black king to escape,
+# however the knight in f6 can capture the queen in h5,
+# hence cancelling the chess to black king. f6h5 is therefore
+# the only ppossible move for blacks.
+#
+# === PGN Format ===
+# 1. e4 e5
+# 2. Bb5 f5
+# 3. Nc3 Nf6
+# 4. d3 g5
+# 5. Nd5 c6
+# 6. Qh5+ Nf6xh5
+# ?-?
+# === Raw Format ===
+e2e4
+e7e5
+f1b5
+f7f5
+b1c3
+g8f6
+d2d3
+g7g5
+c3d5
+c7c6
+d1h5
+f6h5
+/quit
+
+wR,,wB,,wK,,wN,wR,wP,wP,wP,,,wP,wP,wP,,,,wP,,,,,,,,,wP,,,,,wB,,wN,bP,bP,bP,bN,,,bP,,,,,,bP,bP,,bP,,,,bP,bR,bN,bB,bQ,bK,bB,,bR, ?-?

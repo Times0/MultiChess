@@ -1,0 +1,33 @@
+# test a queen-side castling that should be rejected since  
+# one of the square between King and Rook is threaten by
+# an ennemy piece.
+
+# === PGN Format ===
+# 1. d4 d5
+# 2. Bf4 Nf6
+# 3. Nf3 e6
+# 4. Nd2 c6
+# 5. e3 Qb6
+# 6. b3 Ba3
+# 7. Qe2 O-O
+# 8. O-O-O   is illegal
+# ?-?
+# === Raw Format ===
+d2d4
+d7d5
+c1f4
+g8f6
+g1f3
+e7e6
+b1d2
+c7c6
+e2e3
+d8b6
+b2b3
+f8a3
+d1e2
+O-O
+O-O-O
+/quit
+
+wR,,,,wK,wB,,wR,wP,,wP,wN,wQ,wP,wP,wP,bB,wP,,,wP,wN,,,,,,wP,,wB,,,,,,bP,,,,,,bQ,bP,,bP,bN,,,bP,bP,,,,bP,bP,bP,bR,bN,bB,,,bR,bK,, ?-?

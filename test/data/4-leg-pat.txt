@@ -1,0 +1,183 @@
+#
+# Exemple de pat (stalemate en anglais). 
+# Partie de tournoi qui aurait pu se terminer par un pat,
+# le pat est provoqué ici artificiellement au coup 68.
+# 
+# [Event "Gelfand - Kramnik Candidates Semifinal"]
+# [Site "Sanghi Nagar IND"]
+# [Date "1994.08.01"]
+# [Round "6"]
+# [White "Boris Gelfand"]
+# [Black "Vladimir Kramnik"]
+# [Result "1/2-1/2"]
+# [WhiteElo "2680"]
+# [BlackElo "2725"]
+# [ECO "A50"]
+# [EventDate "1994.07.25"]
+#
+#
+c2c4
+g8f6
+d2d4
+c7c6
+c1f4  
+d8b6  
+d1d2  
+f6e4  
+d2c2
+d7d5
+f2f3
+e7e5
+f4e5
+b6a5
+b1c3
+e4c3
+b2c3
+d5c4
+e2e4
+b7b5
+g1e2
+b5b4
+e5f4
+b8a6
+e1f2
+f8e7
+e2g3
+c8e6
+g3f5  
+e6f5
+e4f5
+O-O
+f1c4
+e7f6
+h1e1
+b4c3
+f4e5
+f6e5
+e1e5
+a5a3
+a1c1
+a6c7
+c2c3
+a3d6
+f2g1
+a8d8
+a2a4
+c7d5  
+c4d5
+c6d5
+c3c5
+d6a6  
+c5b5
+a6b6  
+c1d1
+b6d6  
+d1e1  
+d6a3
+b5a5
+d8d7
+a5b5
+a3d6
+e1c1
+h7h6
+b5c5
+d6a6
+c5b5
+a6d6
+h2h4
+f8d8
+c1c5
+d6b6
+g1h2
+b6f6
+h2g3
+a7a6
+b5c6
+d7d6
+c6c7
+d6d7
+c7c6
+d7d6
+c6b7
+d6d7
+b7b3
+f6d6
+g3h3
+g8h7
+g2g3
+h7g8
+h4h5
+g8h8
+h3g2
+h8h7
+g2h2
+h7g8
+h2h3
+g8h8
+h3h2
+h8g8
+h2g2
+g8h7
+a4a5
+h7g8
+b3a2
+g8h7
+g2h3
+h7g8
+h3h2
+g8h7
+h2g2
+h7g8
+g2h2
+g8h7
+h2h3
+h7g8
+a2b3
+g8h7
+h3h2
+h7g8
+h2h3
+d6f6
+c5d5
+f6c6
+d5d7
+c6d7
+b3b6
+g8h7
+g3g4
+f7f6
+e5e4
+d7c8
+e4e7
+# Noirs de jouer
+# Les coup suivants n'ont pas eu lieu dans ce match.
+# Noirs offre sa dame, puis sa tour, acceptés par blancs, le roi ne peut plus jouer
+c8b8
+b6b8
+d8d7
+e7d7
+#
+# == PAT ===
+/quit
+# --------- Voici les coups ayant été vraiment joues, reprenant à partir de 68. d5
+# c8c1
+# d4d5
+# c1f4
+# h3g2
+# d8c8
+# b6a6
+# c8c3
+# a6e2
+# f4c1
+# e2f2
+# c1d1
+# e7e1
+# d1d5
+# e1a1
+# c3d3
+# a1a2
+# d3f3
+# f2f3
+#/quit
+
+,,,,,,,,,,,,,,,,,,,,,wP,,wK,,,,wP,,,wP,,wP,,,,,wP,,wP,bP,,,,,bP,,bP,,,,wR,,,bP,bK,,wQ,,,,,,, 1/2-1/2

@@ -1,0 +1,33 @@
+#illicite
+a1a3
+a2a4
+#illicite
+a8a6
+a7a5
+a1a3
+a8a6
+a3h3
+a6h6
+h3e3
+h6e6
+d2d3
+d7d6
+f2f3
+f7f6
+#illicite
+e3c3
+#illicite
+e3g3
+b2b3
+#illicite
+e6c6
+#illicite
+e6g6
+/quit
+
+#on commence par les lignes en illicites
+#puis en licites
+#puis colonne en illicite
+#puis ligne en licite
+
+,wN,wB,wQ,wK,wB,wN,wR,,,wP,,wP,,wP,wP,,wP,,wP,wR,wP,,,wP,,,,,,,,bP,,,,,,,,,,,bP,bR,bP,,,,bP,bP,,bP,,bP,bP,,bN,bB,bQ,bK,bB,bN,bR, ?-?

@@ -1,0 +1,14 @@
+# teste des mouvements legaux du fou. Ainsi qu'une prise par fou.
+d2d4 
+d7d5
+c1g5 
+g8f6
+g5f6 
+g7f6
+e2e3 
+f8h6
+f1e2
+c8d7
+/quit
+
+wR,wN,,wQ,wK,,wN,wR,wP,wP,wP,,wB,wP,wP,wP,,,,,wP,,,,,,,wP,,,,,,,,bP,,,,,,,,,,bP,,bB,bP,bP,bP,bB,bP,bP,,bP,bR,bN,,bQ,bK,,,bR, ?-?

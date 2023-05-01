@@ -1,0 +1,27 @@
+# Test the pawn passing rule : pawn passing capture
+# can only occur the move immediately after the
+# advance of two squares of the pawn to capture. 
+
+# === PGN Format ===
+# 1. e4 e5
+# 2. d4 Nf6
+# 3. Nc3 Bb4
+# 4. d5 c5
+# 5. Nf3 O-O
+# 6. c6 
+# === Raw Format ===
+e2e4
+e7e5
+d2d4
+g8f6
+b1c3
+f8b4
+d4d5
+c7c5
+g1f3
+d8b6
+# next move is illegal since 4. .. c7c5 occurred 2 moves backward.
+d5c6
+/quit
+
+wR,,wB,wQ,wK,wB,,wR,wP,wP,wP,,,wP,wP,wP,,,wN,,,wN,,,,bB,,,wP,,,,,,bP,wP,bP,,,,,bQ,,,,bN,,,bP,bP,,bP,,bP,bP,bP,bR,bN,bB,,bK,,,bR, ?-?
