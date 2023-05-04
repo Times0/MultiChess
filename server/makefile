@@ -18,9 +18,6 @@ game: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$(OBJ))
 	mkdir -p bin
 	$(CC) $(LDFLAGS) $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$^) $(LDLIBS) -o $(BIN_DIR)/$@
 
-client: $(SRC_DIR)/main_client.cpp
-	mkdir -p bin
-	g++ $(SRC_DIR)/main_client.cpp -o $(BIN_DIR)/$@ $(LDFLAGS) $(LDLIBS)
 
 server: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main.o,$(OBJ)) 	 
 	mkdir -p bin
