@@ -50,7 +50,7 @@ class Game:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ip = None
         self.port = None
-        self.server_thread = threading.Thread(target=self.connect_to_server)
+        self.server_thread = threading.Thread(target=self.thread_srver_handler)
         self.server_thread.start()
         self.last_retrieved_fen = self.logic.get_fen()
         self.color = None
@@ -134,7 +134,7 @@ class Game:
                 if self.btn_flip_board.tick():
                     self.board.flip_board()
                 if self.btn_retry_connection.tick():
-                    self.server_thread = threading.Thread(target=self.connect_to_server)
+                    self.server_thread = threading.Thread(target=self.thread_srver_handler)
                     self.server_thread.start()
 
     def check_end(self):
@@ -190,7 +190,7 @@ class Game:
             self.board.update(self.logic)
             self.current_piece_legal_moves = []
 
-    def connect_to_server(self):
+    def thread_srver_handler(self):
         """
         Runs in a thread and listens to the server
         """
@@ -221,9 +221,9 @@ class Game:
         self.connected_to_server = True
         self.waiting_for_opponent = True
 
-        self.thread_moves()
+        self.moves_handler()
 
-    def thread_moves(self):
+    def moves_handler(self):
         should_run = True
         while should_run:
             try:
