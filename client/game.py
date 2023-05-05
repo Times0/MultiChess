@@ -35,7 +35,7 @@ class Game:
         )
 
         # Entry
-        self.entry_ip = text_input.InputBox(text="127.0.0.1", width=None)
+        self.entry_ip = text_input.InputBox(text="172.27.126.6", width=None)
         self.entry_port = text_input.InputBox(text="5001", width=100)
 
         # Labels

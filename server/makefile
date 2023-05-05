@@ -14,7 +14,7 @@ LDLIBS   := -lm -pthread
 
 
 
-game: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$(OBJ)) 	 
+chess: $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$(OBJ)) 	 
 	mkdir -p bin
 	$(CC) $(LDFLAGS) $(filter-out $(OBJ_DIR)/main_client.o $(OBJ_DIR)/main_server.o,$^) $(LDLIBS) -o $(BIN_DIR)/$@
 

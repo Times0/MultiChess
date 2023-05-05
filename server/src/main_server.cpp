@@ -12,7 +12,7 @@ using namespace std;
 
 #define PORT 5001
 #define MAX_MSG_LEN 1024
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "172.27.126.6"
 
 #define CHK(expr)           \
     if (!(expr))            \
