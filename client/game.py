@@ -2,7 +2,8 @@ import threading
 from board_ui import Board, get_x_y_w_h, pygame
 from logic import Logic, Color, State, Square, Move
 from constants import *
-from tools.button import TextButton
+from tools.button import ButtonRect, ButtonImage, ButtonThread
+from tools.label import Label
 from reseau import *
 import tools.text_input as text_input
 import random
@@ -25,40 +26,41 @@ class Game:
         self.game_on = True
         self.window_on = True
 
-        # Buttons
-        self.buttons = []
-        self.btn_new_game = TextButton("New Game", 10, 50, WHITE)
-        self.btn_flip_board = TextButton("Flip Board", 10, 100, WHITE)
-        self.btn_retry_connection = TextButton("Retry Connection", 10, 150, WHITE)
-        self.buttons.extend(
-            (self.btn_new_game, self.btn_flip_board, self.btn_retry_connection)
-        )
-
-        # Entry
-        self.entry_ip = text_input.InputBox(text="172.27.126.6", width=None)
-        self.entry_port = text_input.InputBox(text="5001", width=100)
-
-        # Labels
-        self.label_enter_ip = pygame.font.SysFont("None", 25).render(
-            f"server IP : ", True, WHITE
-        )
-        self.label_enter_port = pygame.font.SysFont("None", 25).render(
-            f"server port : ", True, WHITE
-        )
-
         # Server
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.ip = None
-        self.port = None
-        self.server_thread = threading.Thread(target=self.thread_srver_handler)
-        self.server_thread.start()
+        self.socket = None
+        self.server_thread = None
         self.last_retrieved_fen = self.logic.get_fen()
         self.color = None
         self.connected_to_server = False
-
         self.waiting_for_opponent = False
-        self.is_my_turn = False
 
+        # # # Assets
+        # button to quit
+        self.btn_quit = ButtonRect(25, 25, RED)
+
+        # button to flip the board
+        img_flip = pygame.image.load(os.path.join("assets", "other", "flip.png")).convert_alpha()
+        self.btn_flip_board = ButtonImage(img_flip)
+
+        # # surface for connection to server
+        self.surface_connection = pygame.Surface((320, 440))
+        # label title connection
+        self.label_title = Label("Connexion", WHITE, font=pygame.font.SysFont("Inter", 70))
+        # text input for ip
+        self.text_input_ip = text_input.InputBox("127.0.0.1", width=150)
+        self.text_input_port = text_input.InputBox("5000", width=70)
+        self.lbl_ip = Label("Server IP :", WHITE)
+        self.lbl_port = Label("Port :", WHITE)
+        # button to connect to server
+        image_connect = pygame.image.load(os.path.join("assets", "other", "connect.png")).convert_alpha()
+        image_connect = pygame.transform.scale(image_connect, (200, 80))
+        image_connect_2 = pygame.image.load(os.path.join("assets", "other", "connect.png")).convert_alpha()
+        image_connect_2 = pygame.transform.scale(image_connect_2, (200, 80))
+        image_connect_2.fill(COLOR_CHANGING, special_flags=pygame.BLEND_RGB_ADD)
+        self.btn_connect = ButtonThread(image_connect, image_connect_2)
+
+        self.objects_in_connection_surface = [self.label_title, self.text_input_ip, self.text_input_port, self.lbl_ip,
+                                              self.lbl_port, self.btn_connect]
         self.color_zougou = (0, 85, 170)
 
     def run(self):
@@ -70,10 +72,25 @@ class Game:
             self.update_board_if_new_info()
             self.draw()
 
+    def events_connection(self, events):
+        self.text_input_ip.handle_event(events)
+        self.text_input_port.handle_event(events)
+        if self.server_thread:
+            self.btn_connect.check_thread(self.server_thread)
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos = pygame.mouse.get_pos()
+                if self.surface_connection.get_rect().collidepoint(pos):
+                    pos = (pos[0] - self.surface_connection.get_rect().x,
+                           pos[1] - self.surface_connection.get_rect().y)
+                if self.btn_connect.tick(pos):
+                    self.server_thread = threading.Thread(target=self.thread_server_handler)
+                    self.server_thread.start()
+
     def events(self):
         events = pygame.event.get()
-        self.entry_ip.handle_event(events)
-        self.entry_port.handle_event(events)
+        if not self.connected_to_server:
+            self.events_connection(events)
         for event in events:
             if event.type == pygame.QUIT:
                 self.window_on = False
@@ -87,12 +104,7 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if self.board.clicked(pos):
-                    if (
-                        self.logic.turn
-                        != self.logic.get_piece(
-                            Square(*self.board.clicked_piece_coord)
-                        ).color
-                    ):
+                    if self.logic.turn != self.logic.get_piece(Square(*self.board.clicked_piece_coord)).color:
                         continue
                     self.current_piece_legal_moves = self.logic.get_legal_moves_piece(
                         Square(*self.board.clicked_piece_coord)
@@ -124,18 +136,13 @@ class Game:
     def check_buttons(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if self.btn_new_game.tick():
+                if self.btn_quit.tick(event.pos):
+                    self.game_on = False
+                    self.socket.close()
+                    pygame.quit()
                     exit()
-                    self.bot_is_thinking = False
-                    self.logic = Logic(STARTINGPOSFEN)
-                    self.board.update(self.logic)
-                    self.game_on = True
-                    self.current_piece_legal_moves = []
-                if self.btn_flip_board.tick():
-                    self.board.flip_board()
-                if self.btn_retry_connection.tick():
-                    self.server_thread = threading.Thread(target=self.thread_srver_handler)
-                    self.server_thread.start()
+                elif self.btn_flip_board.tick(event.pos):
+                    self.board.flip()
 
     def check_end(self):
         if self.logic.state != State.GAMEON:
@@ -148,38 +155,34 @@ class Game:
         self.color_zougou = [
             (c + random.randint(0, 3)) % 255 for c in self.color_zougou
         ]
-        self.win.fill(BLACK)
+        self.win.fill((39, 35, 35))
         self.board.draw(self.win, self.current_piece_legal_moves, *(x, y, w, h))
-        for button in self.buttons:
-            button.draw(self.win)
+        self.btn_flip_board.draw(self.win, x + w - 25, y + h + 10)
+        self.btn_quit.draw(self.win, W - 50, 25)
 
-        s = ""
-        if self.color is None:
-            s = "Not connected"
-        elif self.color == Color.WHITE:
-            s = "Playing as white"
-        elif self.color == Color.BLACK:
-            s = "Playing as black"
-
-        if self.color is None and not self.waiting_for_opponent:
-            self.win.blit(self.label_enter_ip, (10, H - 60))
-            self.win.blit(self.label_enter_port, (10, H - 30))
-
-            self.entry_ip.draw(self.win, 10 + self.label_enter_ip.get_width(), H - 60)
-            self.entry_port.draw(
-                self.win, 10 + self.label_enter_port.get_width(), H - 30
-            )
-
-        if self.waiting_for_opponent:
-            label = pygame.font.SysFont("Arial", 50).render(
-                f"Waiting for opponent", True, self.color_zougou
-            )
-            self.win.blit(label, label.get_rect(center=(W / 2, H / 2)))
+        if not self.connected_to_server:
+            self.draw_connection()
 
         pygame.display.flip()
 
-    def select(self, pos):
-        self.board.select(pos)
+    def draw_connection(self):
+        self.surface_connection.fill((72, 61, 61))
+        self.surface_connection.set_alpha(250)  # transparency value 0 -> transparent, 255 -> opaque
+        x, y = self.surface_connection.get_size()
+        self.label_title.draw(self.surface_connection, x // 2, 60, center=True)
+        self.lbl_ip.draw(self.surface_connection, 42, 179)
+        self.text_input_ip.draw(self.surface_connection, 150, 177)
+        self.lbl_port.draw(self.surface_connection, 42, 235)
+        self.text_input_port.draw(self.surface_connection, 150, 233)
+        self.btn_connect.draw(self.surface_connection, 62, 308)
+
+        W,H = pygame.display.get_surface().get_size()
+        x1, y1 = (W // 2 - self.surface_connection.get_width() // 2,
+                  H // 2 - self.surface_connection.get_height() // 2)
+        for obj in self.objects_in_connection_surface:
+            obj.update_pos(x1, y1)
+        # draw the surface in the center of the screen
+        self.win.blit(self.surface_connection, (x1, y1))
 
     def update_board_if_new_info(self):
         old_fen = self.logic.get_fen()
@@ -190,22 +193,24 @@ class Game:
             self.board.update(self.logic)
             self.current_piece_legal_moves = []
 
-    def thread_srver_handler(self):
+    def thread_server_handler(self):
         """
         Runs in a thread and listens to the server
         """
-        max_attempts = 10
-        delay = 2
+        max_attempts = 2
+        delay = 1
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         attempts = 0
+        ip = str()
+        port = int()
         while attempts < max_attempts:
             if not self.window_on:
                 self.socket.close()
                 return
             try:
                 s = self.socket
-                ip = self.entry_ip.get_text()
-                port = int(self.entry_port.get_text())
+                ip = self.text_input_ip.get_text()
+                port = int(self.text_input_port.get_text())
                 logging.info(f"Trying to connect to {ip}:{port}")
                 r = s.connect_ex((ip, port))
                 if r != 0:
@@ -217,6 +222,7 @@ class Game:
                 time.sleep(delay)
         if attempts == max_attempts:
             logging.error(f"Failed to connect to {ip}:{port}, max attempts reached")
+            return
         logging.info(f"Conection to {ip}:{port} established")
         self.connected_to_server = True
         self.waiting_for_opponent = True

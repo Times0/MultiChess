@@ -9,7 +9,7 @@ PORT = 5000
 
 def main():
     pygame.init()
-    win = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE, pygame.FULLSCREEN)
+    win = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
     game = Game(win, STARTINGPOSFEN)
     game.run()
     pygame.quit()

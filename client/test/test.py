@@ -1,7 +1,6 @@
 import unittest
 from logic import Logic, Color
 from constants import *
-from player import play_well
 from logic import State, Square, Move
 
 import logging
@@ -78,50 +77,6 @@ class TestPromotion(unittest.TestCase):
         new_fen = "rnb1k1Qr/pp1p3p/3b2P1/q1p1p2n/7P/8/PPPP1P2/RNBQKBNR b KQkq - 0 9"
         self.assertEqual(logic.get_fen(), new_fen)
 
-
-class TestProblems(unittest.TestCase):
-    def test_problem_mate_in_1(self):
-        file = open("problems/mate_in_one", "r")
-        for line in file:
-            fen = line.strip()
-            logic = Logic(fen)
-            e, move = play_well(logic)
-            logic.real_move(move)
-            supposed_winner = logic.turn
-            self.assertEqual(logic.state, State.WHITEWINS if supposed_winner == Color.BLACK else State.BLACKWINS)
-        file.close()
-
-    def test_problem_mate_in_2(self):
-        file = open("problems/mate_in_two", "r")
-        nb_lines = sum(1 for line in open("problems/mate_in_two"))
-        for i, line in enumerate(file):
-            fen = line.strip()
-            logic = Logic(fen)
-
-            e, move = play_well(logic)
-            logic.real_move(move)
-            self.assertEqual(logic.state, State.GAMEON)
-
-            e, move = play_well(logic)
-            logic.real_move(move)
-            self.assertEqual(logic.state, State.GAMEON)
-
-            e, move = play_well(logic)
-            logic.real_move(move)
-
-            supposed_winner = logic.turn
-            self.assertEqual(logic.state, State.WHITEWINS if supposed_winner == Color.BLACK else State.BLACKWINS)
-            logging.log(logging.INFO, f"Completed {i} out of {nb_lines}")
-        file.close()
-
-
-class TestRealGame(unittest.TestCase):
-    def test_ten_moves_from_start(self):
-        logic = Logic(STARTINGPOSFEN)
-        for i in range(10):
-            e, move = play_well(logic, randomize=False)
-            logic.real_move(move)
-        self.assertEqual(logic.state, State.GAMEON)
 
 
 if __name__ == '__main__':

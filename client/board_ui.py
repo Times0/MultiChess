@@ -1,5 +1,4 @@
 import pygame
-import logic
 from logic import Color, Square
 from constants import *
 from typing import Tuple
@@ -7,7 +6,7 @@ from logic import Logic
 from fonctions import isInbounds
 
 PADDING_WIDTH = 150
-PADDING_HEIGHT = 10
+PADDING_HEIGHT = 150
 
 
 def get_x_y_w_h():
@@ -152,3 +151,6 @@ class Board:
             i, j = move.destination.i, move.destination.j
             i, j = self.f(i, j)
             pygame.draw.circle(win, RED, (x + j * case_size + case_size // 2, y + i * case_size + case_size // 2), 5)
+
+    def flip(self):
+        self.flipped = not self.flipped
