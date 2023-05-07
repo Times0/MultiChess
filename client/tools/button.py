@@ -82,6 +82,9 @@ class ButtonThread(ButtonImage):
         screen.blit(image, self.rect)
 
     def check_thread(self, thread, cond):
+        if not thread:
+            self.idle()
+            return
         if thread.is_alive():
             self.working()
             if cond:
@@ -95,6 +98,7 @@ class ButtonThread(ButtonImage):
 
     def idle(self):
         self.isWorking = False
+        self.isSucces = False
 
     def success(self):
         self.isSucces = True

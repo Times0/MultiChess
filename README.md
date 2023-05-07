@@ -30,3 +30,9 @@ cd client
 python main.py
 ```
 
+## Screenshots
+First, connect to the server with the ip and the port of the server.
+![](assets/2023-05-07-02-56-38.png)
+
+Then play !
+![](assets/2023-05-07-02-58-53.png)

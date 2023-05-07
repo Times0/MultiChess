@@ -81,8 +81,7 @@ class Game:
         self.text_input_ip.handle_event(events)
         self.text_input_port.handle_event(events)
         self.btn_connect.handle_events(events)
-        if self.server_thread:
-            self.btn_connect.check_thread(self.server_thread, self.connected_to_server)
+        self.btn_connect.check_thread(self.server_thread, self.connected_to_server)
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
