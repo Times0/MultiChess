@@ -19,7 +19,7 @@ class Game:
     def __init__(self, win, fen):
         self.win = win
         self.logic = Logic(fen)
-        self.board = Board(BOARDSIZE)
+        self.board = Board()
         self.board.update(self.logic)
 
         self.current_piece_legal_moves = []
@@ -36,7 +36,8 @@ class Game:
 
         # # # Assets
         # button to quit
-        self.btn_quit = ButtonRect(25, 25, RED)
+        self.btn_quit = ButtonRect(15, 15, RED)
+        self.btn_minimize = ButtonRect(15, 15, YELLOW)
 
         # button to flip the board
         img_flip = pygame.image.load(os.path.join("assets", "other", "flip.png")).convert_alpha()
@@ -45,23 +46,27 @@ class Game:
         # # surface for connection to server
         self.surface_connection = pygame.Surface((320, 440))
         # label title connection
-        self.label_title = Label("Connexion", WHITE, font=pygame.font.SysFont("Inter", 70))
+        self.lbl_title = Label("Connection", WHITE, font=pygame.font.SysFont("Inter", 70))
+        # label waiting
+        self.lbl_waiting = Label("Waiting for an opponent...", WHITE, font=pygame.font.SysFont("None", 20))
         # text input for ip
         self.text_input_ip = text_input.InputBox("127.0.0.1", width=150)
         self.text_input_port = text_input.InputBox("5000", width=70)
         self.lbl_ip = Label("Server IP :", WHITE)
         self.lbl_port = Label("Port :", WHITE)
         # button to connect to server
-        image_connect = pygame.image.load(os.path.join("assets", "other", "connect.png")).convert_alpha()
-        image_connect = pygame.transform.scale(image_connect, (200, 80))
-        image_connect_2 = pygame.image.load(os.path.join("assets", "other", "connect.png")).convert_alpha()
+        image_connect_1 = pygame.image.load(os.path.join("assets", "other", "connect", "idle.png")).convert_alpha()
+        image_connect_1 = pygame.transform.scale(image_connect_1, (200, 80))
+        image_connect_2 = pygame.image.load(os.path.join("assets", "other", "connect", "working.png")).convert_alpha()
         image_connect_2 = pygame.transform.scale(image_connect_2, (200, 80))
-        image_connect_2.fill(COLOR_CHANGING, special_flags=pygame.BLEND_RGB_ADD)
-        self.btn_connect = ButtonThread(image_connect, image_connect_2)
+        image_connect_3 = pygame.image.load(os.path.join("assets", "other", "connect", "hover.png")).convert_alpha()
+        image_connect_3 = pygame.transform.scale(image_connect_3, (200, 80))
+        image_connect_4 = pygame.image.load(os.path.join("assets", "other", "connect", "connected.png")).convert_alpha()
+        image_connect_4 = pygame.transform.scale(image_connect_4, (200, 80))
+        self.btn_connect = ButtonThread(image_connect_1, image_connect_2, image_connect_3, image_connect_4)
 
-        self.objects_in_connection_surface = [self.label_title, self.text_input_ip, self.text_input_port, self.lbl_ip,
-                                              self.lbl_port, self.btn_connect]
-        self.color_zougou = (0, 85, 170)
+        self.objects_in_connection_surface = [self.lbl_title, self.text_input_ip, self.text_input_port, self.lbl_ip,
+                                              self.lbl_port, self.btn_connect, self.lbl_waiting]
 
     def run(self):
         clock = pygame.time.Clock()
@@ -75,30 +80,36 @@ class Game:
     def events_connection(self, events):
         self.text_input_ip.handle_event(events)
         self.text_input_port.handle_event(events)
+        self.btn_connect.handle_events(events)
         if self.server_thread:
-            self.btn_connect.check_thread(self.server_thread)
+            self.btn_connect.check_thread(self.server_thread, self.connected_to_server)
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if self.surface_connection.get_rect().collidepoint(pos):
                     pos = (pos[0] - self.surface_connection.get_rect().x,
                            pos[1] - self.surface_connection.get_rect().y)
-                if self.btn_connect.tick(pos):
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                pos = pygame.mouse.get_pos()
+                if self.btn_connect.tick(pos) and not self.btn_connect.isSucces and not self.btn_connect.isWorking:
                     self.server_thread = threading.Thread(target=self.thread_server_handler)
                     self.server_thread.start()
 
     def events(self):
         events = pygame.event.get()
-        if not self.connected_to_server:
+        if not self.connected_to_server or self.waiting_for_opponent:
             self.events_connection(events)
+        self.check_buttons(events)
+
         for event in events:
             if event.type == pygame.QUIT:
                 self.window_on = False
                 self.game_on = False
                 self.connected_to_server = False
-                self.socket.close()
-
-            self.check_buttons(events)
+                try:
+                    self.socket.close()
+                except AttributeError:
+                    pass
             if not self.game_on:
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -107,8 +118,7 @@ class Game:
                     if self.logic.turn != self.logic.get_piece(Square(*self.board.clicked_piece_coord)).color:
                         continue
                     self.current_piece_legal_moves = self.logic.get_legal_moves_piece(
-                        Square(*self.board.clicked_piece_coord)
-                    )
+                        Square(*self.board.clicked_piece_coord))
             if self.board.dragging:
                 if event.type == pygame.MOUSEMOTION:
                     pos = pygame.mouse.get_pos()
@@ -135,7 +145,7 @@ class Game:
 
     def check_buttons(self, events):
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.btn_quit.tick(event.pos):
                     self.game_on = False
                     self.socket.close()
@@ -143,6 +153,8 @@ class Game:
                     exit()
                 elif self.btn_flip_board.tick(event.pos):
                     self.board.flip()
+                elif self.btn_minimize.tick(event.pos):
+                    pygame.display.iconify()
 
     def check_end(self):
         if self.logic.state != State.GAMEON:
@@ -152,15 +164,13 @@ class Game:
     def draw(self):
         x, y, w, h = get_x_y_w_h()
         W, H = pygame.display.get_surface().get_size()
-        self.color_zougou = [
-            (c + random.randint(0, 3)) % 255 for c in self.color_zougou
-        ]
         self.win.fill((39, 35, 35))
         self.board.draw(self.win, self.current_piece_legal_moves, *(x, y, w, h))
         self.btn_flip_board.draw(self.win, x + w - 25, y + h + 10)
         self.btn_quit.draw(self.win, W - 50, 25)
+        self.btn_minimize.draw(self.win, W - 100, 25)
 
-        if not self.connected_to_server:
+        if not self.connected_to_server or self.waiting_for_opponent:
             self.draw_connection()
 
         pygame.display.flip()
@@ -169,14 +179,17 @@ class Game:
         self.surface_connection.fill((72, 61, 61))
         self.surface_connection.set_alpha(250)  # transparency value 0 -> transparent, 255 -> opaque
         x, y = self.surface_connection.get_size()
-        self.label_title.draw(self.surface_connection, x // 2, 60, center=True)
+        self.lbl_title.draw(self.surface_connection, x // 2, 60, center=True)
         self.lbl_ip.draw(self.surface_connection, 42, 179)
         self.text_input_ip.draw(self.surface_connection, 150, 177)
         self.lbl_port.draw(self.surface_connection, 42, 235)
         self.text_input_port.draw(self.surface_connection, 150, 233)
         self.btn_connect.draw(self.surface_connection, 62, 308)
+        if self.btn_connect.isSucces:
+            # draw label saying waiting for opponent
+            self.lbl_waiting.draw(self.surface_connection, x // 2, 400, center=True)
 
-        W,H = pygame.display.get_surface().get_size()
+        W, H = pygame.display.get_surface().get_size()
         x1, y1 = (W // 2 - self.surface_connection.get_width() // 2,
                   H // 2 - self.surface_connection.get_height() // 2)
         for obj in self.objects_in_connection_surface:
@@ -251,14 +264,16 @@ class Game:
                     if color == "white":
                         self.color = Color.WHITE
                         self.board.flipped = False
+                        self.waiting_for_opponent = False
+
                     elif color == "black":
                         self.color = Color.BLACK
                         self.board.flipped = True
+                        self.waiting_for_opponent = False
+
                     else:
                         logging.error("Invalid color")
                         exit()
-                    self.waiting_for_opponent = False
-                    self.connected_to_server = True
                 elif line.startswith("fen:"):
                     fen_str = line[4:]
                     self.last_retrieved_fen = fen_str.strip()
@@ -271,10 +286,10 @@ class Game:
                 else:
                     logging.error(f"Received <<{line!r}>> which was not understood")
 
-        self.clear()
+        self.clean()
 
-    def clear(self):
-        logging.info("Clearing")
+    def clean(self):
+        logging.info("Cleaning up")
         self.socket.close()
         self.connected_to_server = False
         self.waiting_for_opponent = False

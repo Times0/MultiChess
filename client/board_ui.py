@@ -6,7 +6,7 @@ from logic import Logic
 from fonctions import isInbounds
 
 PADDING_WIDTH = 150
-PADDING_HEIGHT = 150
+PADDING_HEIGHT = 75
 
 
 def get_x_y_w_h():
@@ -32,9 +32,8 @@ def coord_from_pos(coord_x, coord_y) -> Tuple[int, int]:
 
 
 class Board:
-    def __init__(self, size):
-        self.size = size
-
+    def __init__(self):
+        self.clicked_piece_coord = None
         self.board_to_output = [[None for _ in range(8)] for _ in range(8)]
 
         self.dragged_piece = None
@@ -115,9 +114,9 @@ class Board:
         for i in range(8):
             for j in range(8):
                 if (i + j) % 2 == 0:
-                    color = CASECOLOR1
+                    color = DARK_SQUARE_COLOR
                 else:
-                    color = CASECOLOR2
+                    color = LIGHT_SQUARE_COLOR
                 pygame.draw.rect(win, color, (x + j * case_size, y + i * case_size, case_size, case_size))
 
     def draw_pieces(self, win, x, y, w, h):
