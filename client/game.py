@@ -2,7 +2,7 @@ import threading
 from board_ui import Board, get_x_y_w_h, pygame
 from logic import Logic, Color, State, Square, Move
 from constants import *
-from tools.button import ButtonRect, ButtonImage, ButtonThread
+from tools.button import ButtonRect, ButtonImage, ButtonThread, IconImagePng
 from tools.label import Label
 from reseau import *
 import tools.text_input as text_input
@@ -36,12 +36,12 @@ class Game:
 
         # # # Assets
         # button to quit
-        self.btn_quit = ButtonRect(15, 15, RED)
-        self.btn_minimize = ButtonRect(15, 15, YELLOW)
+        self.btn_quit = ButtonRect(15, 15, RED, self.quit)
+        self.btn_minimize = ButtonRect(15, 15, YELLOW, self.minimize)
 
         # button to flip the board
         img_flip = pygame.image.load(os.path.join("assets", "other", "flip.png")).convert_alpha()
-        self.btn_flip_board = ButtonImage(img_flip)
+        self.btn_flip_board = IconImagePng(img_flip, self.flip_board)
 
         # # surface for connection to server
         self.surface_connection = pygame.Surface((320, 440))
@@ -63,7 +63,8 @@ class Game:
         image_connect_3 = pygame.transform.scale(image_connect_3, (200, 80))
         image_connect_4 = pygame.image.load(os.path.join("assets", "other", "connect", "connected.png")).convert_alpha()
         image_connect_4 = pygame.transform.scale(image_connect_4, (200, 80))
-        self.btn_connect = ButtonThread(image_connect_1, image_connect_2, image_connect_3, image_connect_4)
+        self.btn_connect = ButtonThread(image_connect_1, image_connect_2, image_connect_3, image_connect_4,
+                                        self.connect_to_server)
 
         self.objects_in_connection_surface = [self.lbl_title, self.text_input_ip, self.text_input_port, self.lbl_ip,
                                               self.lbl_port, self.btn_connect, self.lbl_waiting]
@@ -82,23 +83,14 @@ class Game:
         self.text_input_port.handle_event(events)
         self.btn_connect.handle_events(events)
         self.btn_connect.check_thread(self.server_thread, self.connected_to_server)
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if self.surface_connection.get_rect().collidepoint(pos):
-                    pos = (pos[0] - self.surface_connection.get_rect().x,
-                           pos[1] - self.surface_connection.get_rect().y)
-            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if self.btn_connect.tick(pos) and not self.btn_connect.isSucces and not self.btn_connect.isWorking:
-                    self.server_thread = threading.Thread(target=self.thread_server_handler)
-                    self.server_thread.start()
 
     def events(self):
         events = pygame.event.get()
+        self.btn_quit.handle_events(events)
+        self.btn_minimize.handle_events(events)
+        self.btn_flip_board.handle_events(events)
         if not self.connected_to_server or self.waiting_for_opponent:
             self.events_connection(events)
-        self.check_buttons(events)
 
         for event in events:
             if event.type == pygame.QUIT:
@@ -141,19 +133,6 @@ class Game:
             return
         logging.info(f"Sending move: {move.get_uci()} to server")
         send_move_to_server(self.socket, move.get_uci())
-
-    def check_buttons(self, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if self.btn_quit.tick(event.pos):
-                    self.game_on = False
-                    self.socket.close()
-                    pygame.quit()
-                    exit()
-                elif self.btn_flip_board.tick(event.pos):
-                    self.board.flip()
-                elif self.btn_minimize.tick(event.pos):
-                    pygame.display.iconify()
 
     def check_end(self):
         if self.logic.state != State.GAMEON:
@@ -289,7 +268,30 @@ class Game:
 
     def clean(self):
         logging.info("Cleaning up")
-        self.socket.close()
+        try:
+            self.socket.close()
+        except AttributeError:
+            pass
         self.connected_to_server = False
         self.waiting_for_opponent = False
         self.color = None
+
+    # button functions
+
+    def connect_to_server(self):
+        print("Connecting to server")
+        self.server_thread = threading.Thread(target=self.thread_server_handler)
+        self.server_thread.start()
+
+    def flip_board(self):
+        self.board.flipped = not self.board.flipped
+
+    def quit(self):
+        self.window_on = False
+        self.clean()
+        pygame.quit()
+        exit()
+
+    @staticmethod
+    def minimize():
+        pygame.display.iconify()
