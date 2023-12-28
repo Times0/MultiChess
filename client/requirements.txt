@@ -2,4 +2,3 @@ pygame
 numpy
 PygameUIKit
 chess
-

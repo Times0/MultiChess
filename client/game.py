@@ -58,9 +58,8 @@ class Game:
 
         # UI
         img_flip = load_image(os.path.join("assets", "other", "flip.png"), (25, 25))
-        img_flip = pygame.transform.invert(img_flip)
         img_settings = load_image(os.path.join("assets", "other", "settings.png"), (50, 50))
-        img_settings = pygame.transform.invert(img_settings)
+
         self.ui = Group()
         self.btn_flip_board = ButtonPngIcon(img_flip, self.flip_board, ui_group=self.ui)
         self.btn_settings = ButtonPngIcon(img_settings, lambda: self.menu.open("mode_selection"), ui_group=self.ui)
