@@ -134,6 +134,7 @@ class Game:
         self.board.set_pos_from_logic(self.logic)
 
     def server_listner(self):
+        print("Server listner started")
         should_run = True
         while should_run:
             try:
