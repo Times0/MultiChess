@@ -114,7 +114,6 @@ class Game:
 
     def start_online_game(self):
         logging.info("Starting online game")
-        self.menu.close()
         self.clean()
         self.mode = GameMode.Online
         self.logic.reset()
