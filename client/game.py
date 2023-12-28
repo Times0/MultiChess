@@ -181,8 +181,8 @@ class Game:
             if self.mode == GameMode.Bot:
                 self.bot_events()
             elif self.mode == GameMode.Online:
+                print(self.menu.connection_menu.connected_to_server)
                 if self.menu.connection_menu.connected_to_server and not self.connected_to_server:
-                    print("Shesh")
                     self.server_thread = threading.Thread(target=self.server_listner)
                     self.server_thread.start()
             self.draw()

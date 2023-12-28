@@ -105,7 +105,6 @@ class ServerConnection(MenuPart):
         self.socket = game_socket
         self.socket.settimeout(1)
         self.connected_to_server = False
-        self.waiting_for_opponent = False
         self.btn_connect.thread = self.server_thread
 
     def handle_events(self, events):
@@ -150,7 +149,6 @@ class ServerConnection(MenuPart):
             return False
         logging.info(f"Conection to {ip}:{port} established")
         self.connected_to_server = True
-        self.waiting_for_opponent = True
 
 
 class Menu:
