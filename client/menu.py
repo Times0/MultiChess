@@ -91,7 +91,7 @@ class ServerConnection(MenuPart):
             "ui_group": self.ui,
             "border_radius": 5,
         }
-        self.text_input_ip = TextInput(text="172.0.0.1", placeholder="IP", **params)
+        self.text_input_ip = TextInput(text="127.0.0.1", placeholder="IP", **params)
         self.text_input_port = TextInput(text="5001", placeholder="Port", **params)
         self.btn_connect = button.ButtonThreadText(rect_color=Color((90, 170, 235)),
                                                    text_before="Connect",
