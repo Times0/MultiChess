@@ -123,6 +123,7 @@ class Game:
     def server_listner(self):
         print("Server listner started")
         should_run = True
+        self.socket.settimeout(None)
         time.sleep(1)
         print("Waiting for server to send color")
         while should_run:
