@@ -73,7 +73,7 @@ class Game:
         # Menus
         self.menu = Menu()
         game_selection = GameModeSelection(self.start_local_game, self.start_vs_bot, manager=self.menu)
-        server_selection = ServerConnection(game_socket=self.socket)
+        server_selection = ServerConnection(self.start_online_game, game_socket=self.socket)
         self.menu.add_elements([game_selection, server_selection])
         self.menu.open("mode_selection")
         self.mode: Optional[GameMode] = None
@@ -113,6 +113,7 @@ class Game:
         self.board.set_pos_from_logic(self.logic)
 
     def start_online_game(self, client_color: PieceColor):
+        logging.info("Starting online game")
         self.menu.close()
         self.clean()
         self.mode = GameMode.Online

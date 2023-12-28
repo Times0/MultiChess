@@ -78,7 +78,7 @@ class GameModeSelection(MenuPart):
 
 
 class ServerConnection(MenuPart):
-    def __init__(self, game_socket):
+    def __init__(self, start_game, game_socket):
         super().__init__()
         self.name = "connection"
         self.rect = pygame.Rect(0, 0, 300, 400)
@@ -101,7 +101,7 @@ class ServerConnection(MenuPart):
                                                    border_radius=15,
                                                    ui_group=self.ui,
                                                    font=CONNECTFONT)
-
+        self.start_game = start_game
         self.socket = game_socket
         self.socket.settimeout(1)
         self.connected_to_server = False
@@ -149,6 +149,7 @@ class ServerConnection(MenuPart):
             return False
         logging.info(f"Conection to {ip}:{port} established")
         self.connected_to_server = True
+        self.start_game()
 
 
 class Menu:
