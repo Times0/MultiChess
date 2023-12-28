@@ -238,7 +238,7 @@ class Game:
         pygame.display.flip()
 
     def play(self, move):
-        if SERVER_MODE:
+        if self.mode == GameMode.Online:
             logging.info(f"Sending move: {move.get_uci()} to server")
             send_move_to_server(self.socket, move.get_uci())
         else:
