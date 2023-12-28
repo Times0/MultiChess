@@ -1,6 +1,6 @@
 import numpy as np
 
-from client.constants import STARTINGPOSFEN
+from constants import STARTINGPOSFEN
 from pieces import Square, Move, PieceColor, piece_from_abbreviation, other_color, Side, Piece, Queen, King
 import enum
 
