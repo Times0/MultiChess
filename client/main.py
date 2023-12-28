@@ -10,7 +10,6 @@ PORT = 5000
 def main():
     pygame.init()
     win = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-    # name window
     pygame.display.set_caption("MultiChess")
     pygame.display.set_icon(pygame.image.load("assets/icon.png"))
     game = Game(win, STARTINGPOSFEN)

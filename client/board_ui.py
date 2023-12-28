@@ -1,7 +1,8 @@
 import pygame
-from logic import Color, Square
+from client.pieces import Piece
+from logic import Square
 from constants import *
-from typing import Tuple
+from typing import Tuple, Optional
 from logic import Logic
 from fonctions import isInbounds
 
@@ -33,84 +34,85 @@ def coord_from_pos(coord_x, coord_y) -> Tuple[int, int]:
 
 class Board:
     def __init__(self):
-        self.clicked_piece_coord = None
         self.board_to_output = [[None for _ in range(8)] for _ in range(8)]
 
+        self.clicked_piece_coord = None
         self.dragged_piece = None
-        self.dragged_piece_coord = None  # i,j
+        self.dragged_piece_coord = None
+
         self.dragging = False
         self.flipped = False
 
+        self.rect = pygame.Rect(*get_x_y_w_h())
+
     def set_to_gone(self, i, j):
-        self.dragged_piece = self.get_piece_at(i, j)
+        self.dragged_piece = self._get_piece_at(i, j)
         if not self.dragged_piece:
             return
         self.dragging = True
-        self.board_to_output[i][j] = "gone"
         self.clicked_piece_coord = i, j
 
-    def f(self, i, j):
+    def _f(self, i, j):
         if self.flipped:
             return i, 7 - j
         else:
             return 7 - i, j
 
     def set_to_not_gone(self):
-        i, j = self.clicked_piece_coord
-        self.board_to_output[i][j] = self.dragged_piece
         self.dragged_piece = None
         self.dragged_piece_coord = None
-        self.dragged_piece_pos = None
         self.dragging = False
 
-    def get_piece_at(self, i, j):
+    def _get_piece_at(self, i, j) -> Optional[Piece]:
         return self.board_to_output[i][j]
 
-    def is_empty(self, i, j):
-        return (self.get_piece_at(i, j)) is None
-
-    def update(self, logic: Logic):
+    def set_pos_from_logic(self, logic: Logic):
         for i in range(8):
             for j in range(8):
-                self.set_piece(i, j, logic.get_piece(Square(i, j)))
+                self._set_piece(i, j, logic.get_piece(Square(i, j)))
 
-    def set_piece(self, i, j, piece):
+    def _set_piece(self, i, j, piece):
         self.board_to_output[i][j] = piece
 
     def clicked(self, pos) -> bool:
         """Called when the mouse is clicked return True if there is a piece at the position"""
-        i, j = self.f(*coord_from_pos(*pos))
+        i, j = self._f(*coord_from_pos(*pos))
         if not isInbounds(i, j):
             return False
-        if not self.is_empty(i, j):
-            self.dragged_piece_pos = pos
+        if self._get_piece_at(i, j) is not None:
             self.set_to_gone(i, j)
             return True
         return False
 
-    def drag(self, pos) -> None:
-        """Called only when a piece is already being dragged"""
-        self.dragged_piece_pos = pos
-
     def drop(self, pos) -> Tuple[int, int]:
         """Called when a piece is already being dragged and the mouse is released"""
-        i, j = self.f(*coord_from_pos(*pos))
+        i, j = self._f(*coord_from_pos(*pos))
         self.set_to_not_gone()
         return i, j
 
     def flip_board(self):
         self.flipped = not self.flipped
 
-    # affichage
-
-    def draw(self, win, dots, x, y, w, h):
+    def draw(self, win, dots):
         """Draws everything"""
-        self.draw_board(win, x, y, w, h)
-        self.draw_pieces(win, x, y, w, h)
-        self.draw_dots(win, dots, x, y, w, h)
+        self.draw_board(win)
+        self.draw_pieces(win)
+        self.draw_dots(win, dots)
+        self.draw_dragged_piece(win)
 
-    def draw_board(self, win, x, y, w, h):
-        case_size = w // 8
+    def draw_dragged_piece(self, win):
+        if self.dragging:
+            _, _, w, _ = get_x_y_w_h()
+            case_size = w // 8
+            img = pygame.transform.smoothscale(pieces_images[self.dragged_piece.get_fen()],
+                                               (case_size * 1.1, case_size * 1.1))
+            x, y = pygame.mouse.get_pos()
+            win.blit(img, img.get_rect(center=(x, y)))
+
+    def draw_board(self, win):
+        case_size = self.rect.w // 8
+        x = self.rect.x
+        y = self.rect.y
         for i in range(8):
             for j in range(8):
                 if (i + j) % 2 == 0:
@@ -119,37 +121,42 @@ class Board:
                     color = LIGHT_SQUARE_COLOR
                 pygame.draw.rect(win, color, (x + j * case_size, y + i * case_size, case_size, case_size))
 
-    def draw_pieces(self, win, x, y, w, h):
+    def draw_pieces(self, win):
+        x, y = self.rect.x, self.rect.y
+        w = self.rect.w
         case_size = w // 8
         for i in range(8):
             itab = 7 - i if not self.flipped else i
             for j in range(8):
                 jtab = j if not self.flipped else 7 - j
-                piece = self.get_piece_at(itab, jtab)
-                if piece == "gone":
-                    abreviation = self.dragged_piece.abreviation
-                    if self.dragged_piece.color == Color.BLACK:
-                        abreviation = abreviation.lower()
-                    image_p = globals()[f"{abreviation}_image"]
-                    image_p = pygame.transform.smoothscale(image_p, (int(case_size * 1.1), int(case_size * 1.1)))
-                    win.blit(image_p,
-                             (self.dragged_piece_pos[0] - case_size // 2,
-                              self.dragged_piece_pos[1] - case_size // 2))
-                elif piece is not None:
-                    color = piece.color
-                    abreviation = piece.abreviation
-                    if color == Color.BLACK:
-                        abreviation = abreviation.lower()
-                    image_p = globals()[f"{abreviation}_image"]
-                    image_p = pygame.transform.smoothscale(image_p, (case_size, case_size))
-                    win.blit(image_p, (x + j * case_size, y + i * case_size))
+                if self.dragging and (itab, jtab) == self.clicked_piece_coord:
+                    continue
+                piece = self._get_piece_at(itab, jtab)
+                if piece is not None:
+                    img = pygame.transform.smoothscale(pieces_images[piece.get_fen()], (case_size, case_size))
+                    win.blit(img, (x + j * case_size, y + i * case_size))
 
-    def draw_dots(self, win, moves, x, y, w, h):
+    def draw_dots(self, win, moves):
+        x, y = self.rect.x, self.rect.y
+        w = self.rect.w
         case_size = w // 8
         for move in moves:
             i, j = move.destination.i, move.destination.j
-            i, j = self.f(i, j)
+            i, j = self._f(i, j)
             pygame.draw.circle(win, RED, (x + j * case_size + case_size // 2, y + i * case_size + case_size // 2), 5)
 
-    def flip(self):
-        self.flipped = not self.flipped
+
+pieces_images = {
+    'P': P_image,
+    'R': R_image,
+    'N': N_image,
+    'B': B_image,
+    'Q': Q_image,
+    'K': K_image,
+    'p': p_image,
+    'r': r_image,
+    'n': n_image,
+    'b': b_image,
+    'q': q_image,
+    'k': k_image
+}

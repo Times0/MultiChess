@@ -1,6 +1,5 @@
 import numpy as np
-from pieces import Square, Move, Color, piece_from_abreviation, other_color, Side, Piece, Pawn, Knight, Bishop, Rook, \
-    Queen, King
+from pieces import Square, Move, Color, piece_from_abbreviation, other_color, Side, Piece, Queen, King
 import enum
 
 
@@ -11,7 +10,7 @@ class State(enum.Enum):
     DRAW = 3  # 50 moves rule, stalemate
 
 
-class Piece: # Forward declaration
+class Piece:  # Forward declaration
     pass
 
 
@@ -19,7 +18,7 @@ class Logic:
     def __init__(self, fen):
         self.board = np.empty((8, 8), dtype=Piece)
         self.state = State.GAMEON
-        self.turn = Color
+        self.turn: Color = Color.WHITE
         self.castle_rights_bit = 0
         self.full_move_number = int()
         self.half_move_clock = int()
@@ -40,7 +39,7 @@ class Logic:
                 if char.isdigit():
                     j += int(char)
                 else:
-                    self.set_piece(Square(7 - i, j), piece_from_abreviation(char, 7 - i, j))
+                    self.set_piece(Square(7 - i, j), piece_from_abbreviation(char, 7 - i, j))
                     j += 1
         self.turn = Color.WHITE if fen[1] == "w" else Color.BLACK
         str_castle_rights = fen[2]
@@ -96,7 +95,7 @@ class Logic:
     def get_piece(self, square: Square) -> Piece or None:
         return self.board[square.i][square.j]
 
-    def set_piece(self, square: Square, piece: Piece) -> None:
+    def set_piece(self, square: Square, piece: Piece | None) -> None:
         self.board[square.i][square.j] = piece
 
     def squares_attacked_by(self, color: Color) -> list[Square]:
@@ -180,13 +179,13 @@ class Logic:
             raise Exception(f"it's not {piece.color}'s turn")
         self.en_passant_square = None
 
-        if piece and piece.abreviation.lower() == "p" or move.is_capture:
+        if piece and piece.abbreviation.lower() == "p" or move.is_capture:
             self.half_move_clock = 0
         else:
             self.half_move_clock += 1
 
         # castle
-        piece_type = piece.abreviation.lower()
+        piece_type = piece.abbreviation.lower()
         if piece_type == "k":
             self.king_square[piece.color] = move.destination
             if abs(move.origin.j - move.destination.j) == 2:
@@ -254,14 +253,10 @@ class Logic:
             for j in "abcdefgh":
                 piece = self.get_piece(Square(j + str(i)))
                 if piece:
-                    s += piece.abreviation + " "
+                    s += piece.abbreviation + " "
                 else:
                     s += "~ "
             s += "\n"
         s += "____________________\n"
         s += "  a b c d e f g h"
         return s
-
-
-if __name__ == "__main__":
-    pass
