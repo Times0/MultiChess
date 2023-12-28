@@ -156,6 +156,7 @@ class ServerConnection(MenuPart):
 class Menu:
     def __init__(self):
         self.menus: dict[str, MenuPart] = dict()
+        self.connection_menu: Optional[ServerConnection] = None
         self.active_element: Optional[MenuPart] = None
         self.rect = pygame.display.get_surface().get_rect()
 
@@ -164,6 +165,8 @@ class Menu:
             return
         for element in elements:
             self.menus[element.name] = element
+            if element.name == "connection":
+                self.connection_menu = element
 
     def open(self, name):
         self.active_element = self.menus[name]

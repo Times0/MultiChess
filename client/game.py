@@ -53,8 +53,6 @@ class Game:
         self.server_thread = None
         self.last_retrieved_fen = self.logic.get_fen()
         self.color = None
-        self.connected_to_server = False
-        self.waiting_for_opponent = False
 
         # UI
         img_flip = load_image(os.path.join("assets", "other", "flip.png"), (25, 25))
@@ -74,6 +72,7 @@ class Game:
         self.thread_bot: Optional[threading.Thread] = None
 
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.waiting_for_opponent = False
 
         # Menus
         self.menu = Menu()
@@ -139,6 +138,7 @@ class Game:
         while should_run:
             try:
                 data = self.socket.recv(1024)
+                print(f"Received {data}")
             except Exception as e:
                 logging.error(f"Error while receiving data: {e}")
                 break
@@ -155,7 +155,6 @@ class Game:
                         self.color = PieceColor.WHITE
                         self.board.flipped = False
                         self.waiting_for_opponent = False
-
                     elif color == "black":
                         self.color = PieceColor.BLACK
                         self.board.flipped = True
@@ -184,7 +183,7 @@ class Game:
             if self.mode == GameMode.Bot:
                 self.bot_events()
             elif self.mode == GameMode.Online:
-                if self.connected_to_server and not self.server_thread:
+                if self.menu.connection_menu.connected_to_server and not self.server_thread:
                     self.server_thread = threading.Thread(target=self.server_listner)
                     self.server_thread.start()
             self.draw()
