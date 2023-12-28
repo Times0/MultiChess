@@ -133,6 +133,48 @@ class Game:
         self.logic.reset()
         self.board.set_pos_from_logic(self.logic)
 
+    def server_listner(self):
+        should_run = True
+        while should_run:
+            try:
+                data = self.socket.recv(1024)
+            except Exception as e:
+                logging.error(f"Error while receiving data: {e}")
+                break
+            data = data.decode()
+            if not data:
+                logging.error("No data received")
+                break
+            liste = data.split("\n")
+            for line in liste:
+                if line.startswith("color:"):
+                    color = line[6:]
+                    logging.debug(f"Recieved color: {color}")
+                    if color == "white":
+                        self.color = PieceColor.WHITE
+                        self.board.flipped = False
+                        self.waiting_for_opponent = False
+
+                    elif color == "black":
+                        self.color = PieceColor.BLACK
+                        self.board.flipped = True
+                        self.waiting_for_opponent = False
+                    else:
+                        logging.error("Invalid color")
+                        exit()
+                elif line.startswith("fen:"):
+                    fen_str = line[4:]
+                    self.last_retrieved_fen = fen_str.strip()
+                elif line.startswith("info:"):
+                    type_info = line[5:].strip()
+                    if type_info == "SERVER STOP":
+                        logging.info("Server stopped")
+                        should_run = False
+                        break
+                else:
+                    logging.error(f"Received <<{line!r}>> which was not understood")
+        self.clean()
+
     def run(self):
         clock = pygame.time.Clock()
         while self.window_on:
@@ -140,6 +182,10 @@ class Game:
             self.events()
             if self.mode == GameMode.Bot:
                 self.bot_events()
+            elif self.mode == GameMode.Online:
+                if self.connected_to_server and not self.server_thread:
+                    self.server_thread = threading.Thread(target=self.server_listner)
+                    self.server_thread.start()
             self.draw()
 
     def bot_events(self):

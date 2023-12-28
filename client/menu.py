@@ -82,7 +82,7 @@ class ServerConnection(MenuPart):
         super().__init__()
         self.name = "connection"
         self.rect = pygame.Rect(0, 0, 300, 400)
-        self.server_thread = threading.Thread(target=self.thread_server_handler)
+        self.server_thread = threading.Thread(target=self.thread_server_connection)
 
         params = {
             "font": FONT,
@@ -120,7 +120,7 @@ class ServerConnection(MenuPart):
         self.btn_connect.draw(win,
                               *self.btn_connect.surface.get_rect(midbottom=self.rect.midbottom).move(0, -30).topleft)
 
-    def thread_server_handler(self):
+    def thread_server_connection(self):
         """
         Runs in a thread and listens to the server
         """
@@ -151,8 +151,6 @@ class ServerConnection(MenuPart):
         logging.info(f"Conection to {ip}:{port} established")
         self.connected_to_server = True
         self.waiting_for_opponent = True
-
-        self.moves_handler()
 
 
 class Menu:
