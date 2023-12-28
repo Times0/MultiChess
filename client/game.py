@@ -48,12 +48,6 @@ class Game:
         self.game_on = True
         self.window_on = True
 
-        # Server
-        self.socket = None
-        self.server_thread = None
-        self.last_retrieved_fen = self.logic.get_fen()
-        self.color = None
-
         # UI
         img_flip = load_image(os.path.join("assets", "other", "flip.png"), (25, 25))
         img_settings = load_image(os.path.join("assets", "other", "settings.png"), (50, 50))
@@ -73,6 +67,8 @@ class Game:
 
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.waiting_for_opponent = False
+        self.server_thread: Optional[threading.Thread] = None
+        self.last_retrieved_fen = None
 
         # Menus
         self.menu = Menu()
@@ -154,11 +150,11 @@ class Game:
                     color = line[6:]
                     logging.debug(f"Recieved color: {color}")
                     if color == "white":
-                        self.color = PieceColor.WHITE
+                        # self.color = PieceColor.WHITE
                         self.board.flipped = False
                         self.waiting_for_opponent = False
                     elif color == "black":
-                        self.color = PieceColor.BLACK
+                        # self.color = PieceColor.BLACK
                         self.board.flipped = True
                         self.waiting_for_opponent = False
                     else:
@@ -185,7 +181,8 @@ class Game:
             if self.mode == GameMode.Bot:
                 self.bot_events()
             elif self.mode == GameMode.Online:
-                if self.menu.connection_menu.connected_to_server and not self.server_thread.is_alive():
+                if self.menu.connection_menu.connected_to_server and not self.connected_to_server:
+                    print("Shesh")
                     self.server_thread = threading.Thread(target=self.server_listner)
                     self.server_thread.start()
             self.draw()
