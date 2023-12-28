@@ -206,7 +206,10 @@ class Game:
                         self.thread_bot.start()
 
             elif self.mode == GameMode.Online:
-                pass
+                if self.players.get(self.logic.turn) == PlayerType.HUMAN:
+                    self.board.handle_event(event)
+                else:
+                    pass
 
             if event.type == pygame.QUIT:
                 self.window_on = False
