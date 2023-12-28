@@ -124,7 +124,6 @@ class Game:
         print("Server listner started")
         should_run = True
         self.socket.settimeout(None)
-        time.sleep(1)
         print("Waiting for server to send color")
         while should_run:
             try:
@@ -143,16 +142,21 @@ class Game:
                     color = line[6:]
                     logging.debug(f"Recieved color: {color}")
                     if color == "white":
-                        # self.color = PieceColor.WHITE
+                        self.players = {PieceColor.WHITE: PlayerType.HUMAN,
+                                        PieceColor.BLACK: PlayerType.ONLINE}
                         self.board.flipped = False
                         self.waiting_for_opponent = False
                     elif color == "black":
-                        # self.color = PieceColor.BLACK
+                        self.players = {PieceColor.WHITE: PlayerType.ONLINE,
+                                        PieceColor.BLACK: PlayerType.HUMAN}
                         self.board.flipped = True
                         self.waiting_for_opponent = False
                     else:
                         logging.error("Invalid color")
                         exit()
+                    if not self.waiting_for_opponent:
+                        time.sleep(1)
+                        self.menu.close()
                 elif line.startswith("fen:"):
                     fen_str = line[4:]
                     self.last_retrieved_fen = fen_str.strip()
