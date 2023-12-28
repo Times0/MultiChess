@@ -1,5 +1,4 @@
 import logging
-import socket
 import threading
 import time
 
@@ -11,7 +10,7 @@ from typing import Optional
 
 from pygame import Color
 
-from client.pieces import PieceColor
+from pieces import PieceColor
 
 MENU_COLOR = (18, 18, 18)
 MENU_BUTTON_COLOR = (50, 50, 50)
