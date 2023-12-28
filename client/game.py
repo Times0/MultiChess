@@ -1,5 +1,6 @@
 import os
 import queue
+import socket
 import threading
 from enum import Enum
 from typing import Optional
@@ -47,14 +48,6 @@ class Game:
         self.game_on = True
         self.window_on = True
 
-        # Menus
-        self.menu = Menu()
-        game_selection = GameModeSelection(self.start_local_game, self.start_vs_bot, manager=self.menu)
-        server_selection = ServerConnection(self.connect_to_server)
-        self.menu.add_elements([game_selection, server_selection])
-        self.menu.open("mode_selection")
-        self.mode: Optional[GameMode] = None
-
         # Server
         self.socket = None
         self.server_thread = None
@@ -81,6 +74,16 @@ class Game:
         self.queue: queue.Queue = queue.Queue()
         self.thread_bot: Optional[threading.Thread] = None
 
+        self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Menus
+        self.menu = Menu()
+        game_selection = GameModeSelection(self.start_local_game, self.start_vs_bot, manager=self.menu)
+        server_selection = ServerConnection(game_socket=self.socket)
+        self.menu.add_elements([game_selection, server_selection])
+        self.menu.open("mode_selection")
+        self.mode: Optional[GameMode] = None
+
     def clean(self):
         if self.thread_bot:
             self.thread_bot.join()
@@ -100,7 +103,7 @@ class Game:
         self.logic.reset()
         self.board.set_pos_from_logic(self.logic)
 
-    def start_vs_bot(self, bot_color: Color):
+    def start_vs_bot(self, bot_color: PieceColor):
         self.menu.close()
         self.clean()
         self.mode = GameMode.Bot
@@ -112,6 +115,22 @@ class Game:
             self.board.flipped = False
             self.players = {PieceColor.WHITE: PlayerType.HUMAN,
                             PieceColor.BLACK: PlayerType.BOT}
+        self.logic.reset()
+        self.board.set_pos_from_logic(self.logic)
+
+    def start_online_game(self, client_color: PieceColor):
+        self.menu.close()
+        self.clean()
+        self.mode = GameMode.Online
+
+        if client_color == PieceColor.WHITE:
+            self.board.flipped = True
+            self.players = {PieceColor.WHITE: PlayerType.HUMAN,
+                            PieceColor.BLACK: PlayerType.ONLINE}
+        else:
+            self.board.flipped = False
+            self.players = {PieceColor.WHITE: PlayerType.ONLINE,
+                            PieceColor.BLACK: PlayerType.HUMAN}
         self.logic.reset()
         self.board.set_pos_from_logic(self.logic)
 
@@ -170,7 +189,8 @@ class Game:
             self.player_label.text = "White to play"
         else:
             self.player_label.text = "Black to play"
-        self.player_label.draw(self.win, self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 50)
+        self.player_label.draw(self.win,
+                               self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 50)
         self.menu.draw(self.win)
         pygame.display.flip()
 
@@ -195,42 +215,6 @@ class Game:
             self.logic = Logic(new_fen)
             self.board.set_pos_from_logic(self.logic)
             # self.current_piece_legal_moves = []
-
-    def thread_server_handler(self):
-        """
-        Runs in a thread and listens to the server
-        """
-        max_attempts = 2
-        delay = 1
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        attempts = 0
-        ip = str()
-        port = int()
-        while attempts < max_attempts:
-            if not self.window_on:
-                self.socket.close()
-                return
-            try:
-                s = self.socket
-                ip = self.text_input_ip.get_text()
-                port = int(self.text_input_port.get_text())
-                logging.info(f"Trying to connect to {ip}:{port}")
-                r = s.connect_ex((ip, port))
-                if r != 0:
-                    raise Exception("Connection failed")
-                break  # exit the function after a successful connection
-            except Exception as e:
-                attempts += 1
-                logging.debug(f"Attempt {attempts} failed: {e}")
-                time.sleep(delay)
-        if attempts == max_attempts:
-            logging.error(f"Failed to connect to {ip}:{port}, max attempts reached")
-            return
-        logging.info(f"Conection to {ip}:{port} established")
-        self.connected_to_server = True
-        self.waiting_for_opponent = True
-
-        self.moves_handler()
 
     def moves_handler(self):
         should_run = True
@@ -277,11 +261,6 @@ class Game:
                     logging.error(f"Received <<{line!r}>> which was not understood")
 
         self.clean()
-
-    def connect_to_server(self):
-        print("Connecting to server")
-        self.server_thread = threading.Thread(target=self.thread_server_handler)
-        self.server_thread.start()
 
     def flip_board(self):
         self.board.flipped = not self.board.flipped

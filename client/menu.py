@@ -1,3 +1,8 @@
+import logging
+import socket
+import threading
+import time
+
 import pygame
 from PygameUIKit import Group, button
 from PygameUIKit.label import Label
@@ -14,7 +19,7 @@ FONT_COLOR = (179, 179, 179)
 
 FONT = pygame.font.SysFont("lucidafaxdemigras", 30)
 
-CONNECTFONT = pygame.font.SysFont("Arial", 40)
+CONNECTFONT = pygame.font.SysFont("lucidafaxdemigras", 40)
 
 
 class MenuPart:
@@ -55,7 +60,6 @@ class GameModeSelection(MenuPart):
         super().__init__(manager)
         self.name = "mode_selection"
         self.rect = pygame.Rect(0, 0, 300, 300)
-
         params = {"rect_color": MENU_BUTTON_COLOR,
                   "font": FONT,
                   "font_color": FONT_COLOR,
@@ -64,7 +68,8 @@ class GameModeSelection(MenuPart):
                   "ui_group": self.ui}
         self.btn_local = button.ButtonText("1v1 Local", **params, onclick_f=start_local)
         self.btn_online = button.ButtonText("1v1 Online", **params, onclick_f=lambda: self.manager.open("connection"))
-        self.btn_bot = button.ButtonText("1vBot", **params, onclick_f=lambda: start_bot(PieceColor.BLACK)) # TODO: Add color selection
+        self.btn_bot = button.ButtonText("1vBot", **params,
+                                         onclick_f=lambda: start_bot(PieceColor.BLACK))  # TODO: Add color selection
 
     def draw(self, win):
         super().draw(win)
@@ -74,10 +79,11 @@ class GameModeSelection(MenuPart):
 
 
 class ServerConnection(MenuPart):
-    def __init__(self, function_connect_to_server):
+    def __init__(self, game_socket):
         super().__init__()
         self.name = "connection"
         self.rect = pygame.Rect(0, 0, 300, 400)
+        self.server_thread = threading.Thread(target=self.thread_server_handler)
 
         params = {
             "font": FONT,
@@ -86,28 +92,68 @@ class ServerConnection(MenuPart):
             "ui_group": self.ui,
             "border_radius": 5,
         }
-        self.text_input_ip = TextInput(placeholder="IP", **params)
-        self.text_input_port = TextInput(placeholder="Port", **params)
-
-        self.btn_connect = button.ButtonThreadText(rect_color=Color("green"),
+        self.text_input_ip = TextInput(text="192.0.0.1", placeholder="IP", **params)
+        self.text_input_port = TextInput(text="5000", placeholder="Port", **params)
+        self.btn_connect = button.ButtonThreadText(rect_color=Color((90, 170, 235)),
                                                    text_before="Connect",
                                                    text_during="Connecting...",
                                                    text_after="Connected",
-                                                   onclick_f=function_connect_to_server,
+                                                   onclick_f=lambda t=self.server_thread: t.start(),
+                                                   border_radius=15,
                                                    ui_group=self.ui,
                                                    font=CONNECTFONT)
+
+        self.socket = game_socket
+        self.socket.settimeout(1)
+        self.connected_to_server = False
+        self.waiting_for_opponent = False
+        self.btn_connect.thread = self.server_thread
 
     def handle_events(self, events):
         self.text_input_ip.handle_events(events)
         self.text_input_port.handle_events(events)
+        self.btn_connect.check_thread(self.server_thread, self.connected_to_server)
 
     def draw(self, win):
         super().draw(win)
         self.text_input_ip.draw(win, *self.rect.move(10, 100).topleft)
         self.text_input_port.draw(win, *self.rect.move(10, 175).topleft)
-
         self.btn_connect.draw(win,
-                              *self.btn_connect.surface.get_rect(midbottom=self.rect.midbottom).move(0, -10).topleft)
+                              *self.btn_connect.surface.get_rect(midbottom=self.rect.midbottom).move(0, -30).topleft)
+
+    def thread_server_handler(self):
+        """
+        Runs in a thread and listens to the server
+        """
+        logging.info("Starting server thread")
+        max_attempts = 2
+        delay = 1
+        attempts = 0
+        ip = str()
+        port = int()
+        while attempts < max_attempts:
+            try:
+                s = self.socket
+                ip = self.text_input_ip.get_text()
+                port = int(self.text_input_port.get_text())
+                logging.info(f"Attempt {attempts + 1}/{max_attempts} to connect to {ip}:{port}")
+                r = s.connect_ex((ip, port))
+                if r != 0:
+                    raise ConnectionError
+                break  # Connection successful
+            except ConnectionError:
+                attempts += 1
+                logging.error(f"Failed to connect to {ip}:{port}, retrying in {delay} seconds")
+                time.sleep(delay)
+                continue
+        if attempts == max_attempts:
+            logging.error(f"Failed to connect to {ip}:{port}, max attempts reached")
+            return False
+        logging.info(f"Conection to {ip}:{port} established")
+        self.connected_to_server = True
+        self.waiting_for_opponent = True
+
+        self.moves_handler()
 
 
 class Menu:

@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 class PlayerType(enum.Enum):
     HUMAN = 0
     BOT = 1
+    ONLINE = 2
 
 
 def play_random(logic, color: PieceColor) -> (int, int, int, int):
