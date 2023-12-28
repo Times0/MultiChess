@@ -7,8 +7,8 @@ from typing import Tuple, Optional
 from logic import Logic
 from pygame import gfxdraw
 
-PADDING_WIDTH = 150
-PADDING_HEIGHT = 75
+PADDING_WIDTH = 125
+PADDING_HEIGHT = 50
 
 
 def get_x_y_w_h():

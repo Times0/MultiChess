@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Optional
 
 from PygameUIKit import Group
+from PygameUIKit.label import Label
 from PygameUIKit.utilis import load_image
 from pygame import Color
 
@@ -33,6 +34,9 @@ class GameMode(Enum):
     Bot = 2
 
 
+FONT_LABEL_COLOR = (97, 175, 239)
+
+
 class Game:
     def __init__(self, win, fen):
         self.win = win
@@ -49,7 +53,6 @@ class Game:
         server_selection = ServerConnection(self.connect_to_server)
         self.menu.add_elements([game_selection, server_selection])
         self.menu.open("mode_selection")
-
         self.mode: Optional[GameMode] = None
 
         # Server
@@ -60,7 +63,7 @@ class Game:
         self.connected_to_server = False
         self.waiting_for_opponent = False
 
-        # button to flip the board
+        # UI
         img_flip = load_image(os.path.join("assets", "other", "flip.png"), (25, 25))
         img_flip = pygame.transform.invert(img_flip)
         img_settings = load_image(os.path.join("assets", "other", "settings.png"), (50, 50))
@@ -68,21 +71,20 @@ class Game:
         self.ui = Group()
         self.btn_flip_board = ButtonPngIcon(img_flip, self.flip_board, ui_group=self.ui)
         self.btn_settings = ButtonPngIcon(img_settings, lambda: self.menu.open("mode_selection"), ui_group=self.ui)
-
         self.players = {PieceColor.WHITE: None,
                         PieceColor.BLACK: None}
 
-        # Maybe not used
+        self.player_label = Label("X to play", font_color=FONT_LABEL_COLOR, font=FONT)
+
+        # May not be used
         self.bot_is_thinking = False
         self.queue: queue.Queue = queue.Queue()
         self.thread_bot: Optional[threading.Thread] = None
 
     def clean(self):
         if self.thread_bot:
-            # Kill the bot thread
             self.thread_bot.join()
         if self.server_thread:
-            # Kill the server thread
             self.server_thread.join()
 
         self.queue = queue.Queue()
@@ -164,6 +166,11 @@ class Game:
         self.board.draw(self.win)
         self.btn_flip_board.draw(self.win, x + w - 25, y + h + 10)
         self.btn_settings.draw(self.win, self.win.get_width() - 60, 10)
+        if self.logic.turn == PieceColor.WHITE:
+            self.player_label.text = "White to play"
+        else:
+            self.player_label.text = "Black to play"
+        self.player_label.draw(self.win, self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 50)
         self.menu.draw(self.win)
         pygame.display.flip()
 
@@ -270,16 +277,6 @@ class Game:
                     logging.error(f"Received <<{line!r}>> which was not understood")
 
         self.clean()
-
-    def clean(self):
-        logging.info("Cleaning up")
-        try:
-            self.socket.close()
-        except AttributeError:
-            pass
-        self.connected_to_server = False
-        self.waiting_for_opponent = False
-        self.color = None
 
     def connect_to_server(self):
         print("Connecting to server")
