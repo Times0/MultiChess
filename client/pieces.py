@@ -1,14 +1,13 @@
 from enum import Enum
 from typing import Optional
 
-from fonctions import other_color, isInbounds
 from square import Square, Move, Side
 
 
 # forwards declaration
 class Logic:
     def __init__(self, fen):
-        self.turn: Color = Color.WHITE
+        self.turn: PieceColor = PieceColor.WHITE
         self.en_passant_square: Optional[Square] = None
         self.castle_rights_bit: int = 0b1111
         self.board: list[list[Piece]]
@@ -19,30 +18,47 @@ class Logic:
     def move(self, move: Move) -> None:
         pass
 
-    def squares_attacked_by(self, color: "Color") -> list[Square]:
+    def squares_attacked_by(self, color: "PieceColor") -> list[Square]:
         pass
 
     def get_fen(self) -> str:
         pass
 
 
-class Color(Enum):
-    WHITE = 0
-    BLACK = 1
+class PieceColor(Enum):
+    WHITE = "White"
+    BLACK = "Black"
+
+
+def other_color(color: "PieceColor"):
+    return PieceColor.WHITE if color == PieceColor.BLACK else PieceColor.BLACK
+
+
+def isInrectangle(pos, pos0, width, height):
+    """
+    Returns True if the point defined by the position is in the rectangle
+    :param pos:
+    :param pos0: top left point of the rectangle
+    :param width:
+    :param height:
+    :return:bool
+    """
+    return pos0[0] <= pos[0] <= pos0[0] + width and pos0[1] <= pos[1] <= pos0[1] + height
+
+
+def isInbounds(i, j):
+    return 0 <= i <= 7 and 0 <= j <= 7
 
 
 class Piece:
     def __init__(self, color, square: Square):
         self.never_moved = True
-        self.color: Color = color
+        self.color: PieceColor = color
         self.square: Square = square
 
         self.abbreviation = dico1[type(self)]
-        if self.color == Color.WHITE:
+        if self.color == PieceColor.WHITE:
             self.abbreviation = self.abbreviation.upper()
-
-    def set_coord_weird(self, i, j) -> None:
-        self.i, self.j = i, j
 
     def almost_legal_moves(self, board: Logic) -> list[Move]:
         """Cette fonction est overriden pour chacune des pièces, elle renvoie les moves possible pour une pièce
@@ -91,7 +107,7 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.direction = 1 if self.color == Color.WHITE else -1
+        self.direction = 1 if self.color == PieceColor.WHITE else -1
 
     def almost_legal_moves(self, board: Logic) -> list[Move]:
         i, j = self.square.i, self.square.j
@@ -102,7 +118,7 @@ class Pawn(Piece):
         i1 = i + dir  # case devant le pion (relativement)
         if isInbounds(i1, j) and not board.get_piece(Square(i1, j)):
             returnlist.append(Move(self.square, Square(i1, j)))
-            if self.square.i == (1 if self.color == Color.WHITE else 6):
+            if self.square.i == (1 if self.color == PieceColor.WHITE else 6):
                 i2 = i1 + dir  # deux cases devant le pion
                 if isInbounds(i2, j) and not board.get_piece(Square(i2, j)):
                     returnlist.append(Move(self.square, Square(i2, j)))
@@ -279,7 +295,7 @@ class King(Piece):
 
     def is_castling_still_available(self, logic: Logic, side: Side):
         color = self.color
-        if color == Color.WHITE:
+        if color == PieceColor.WHITE:
             if side == Side.KING:
                 return logic.castle_rights_bit & 0b0001
             else:
@@ -297,8 +313,8 @@ dico2 = {0: None, 1: Pawn, 2: Bishop, 3: Rook, 4: Knight, 5: Queen, 6: King}
 
 
 def piece_from_abbreviation(abbreviation, i, j):
-    return dico[abbreviation.lower()](Color.BLACK if abbreviation.lower() == abbreviation else Color.WHITE,
+    return dico[abbreviation.lower()](PieceColor.BLACK if abbreviation.lower() == abbreviation else PieceColor.WHITE,
                                       Square(i, j))
 
 
-piece_value = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 1000}
+piece_value = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 1000, "p": 1, "n": 3, "b": 3, "r": 5, "q": 9, "k": 1000}

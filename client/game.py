@@ -1,26 +1,36 @@
 import os
+import queue
 import threading
+from enum import Enum
 from typing import Optional
 
-from PygameUIKit import Group, button
-from PygameUIKit.label import Label
+from PygameUIKit import Group
 from PygameUIKit.utilis import load_image
 from pygame import Color
 
 from board_ui import Board, get_x_y_w_h, pygame
+from ai import PlayerType, Bot
+from pieces import PieceColor
 from logic import Logic, State
 from PygameUIKit.button import ButtonPngIcon
+
+from menu import Menu, ServerConnection, GameModeSelection
 from reseau import *
 import time
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
-BACKGROUND_COLOR = (22, 21, 18)
-COLOR_CHANGING = (0, 85, 170)
+BACKGROUND_COLOR = (0, 0, 0)
 
 FONT = pygame.font.SysFont("lucidafaxdemigras", 30)
 SERVER_MODE = False
+
+
+class GameMode(Enum):
+    Local = 0
+    Online = 1
+    Bot = 2
 
 
 class Game:
@@ -35,7 +45,12 @@ class Game:
 
         # Menus
         self.menu = Menu()
-        self.menu.open("game_selection")
+        game_selection = GameModeSelection(self.start_local_game, self.start_vs_bot, manager=self.menu)
+        server_selection = ServerConnection(self.connect_to_server)
+        self.menu.add_elements([game_selection, server_selection])
+        self.menu.open("mode_selection")
+
+        self.mode: Optional[GameMode] = None
 
         # Server
         self.socket = None
@@ -47,23 +62,91 @@ class Game:
 
         # button to flip the board
         img_flip = load_image(os.path.join("assets", "other", "flip.png"), (25, 25))
+        img_flip = pygame.transform.invert(img_flip)
+        img_settings = load_image(os.path.join("assets", "other", "settings.png"), (50, 50))
+        img_settings = pygame.transform.invert(img_settings)
         self.ui = Group()
-        self.ui.add(self.menu)
         self.btn_flip_board = ButtonPngIcon(img_flip, self.flip_board, ui_group=self.ui)
+        self.btn_settings = ButtonPngIcon(img_settings, lambda: self.menu.open("mode_selection"), ui_group=self.ui)
+
+        self.players = {PieceColor.WHITE: None,
+                        PieceColor.BLACK: None}
+
+        # Maybe not used
+        self.bot_is_thinking = False
+        self.queue: queue.Queue = queue.Queue()
+        self.thread_bot: Optional[threading.Thread] = None
+
+    def clean(self):
+        if self.thread_bot:
+            # Kill the bot thread
+            self.thread_bot.join()
+        if self.server_thread:
+            # Kill the server thread
+            self.server_thread.join()
+
+        self.queue = queue.Queue()
+        self.thread_bot = None
+        self.server_thread = None
+
+    def start_local_game(self):
+        self.menu.close()
+        self.clean()
+        self.mode = GameMode.Local
+        self.players = {PieceColor.WHITE: PlayerType.HUMAN,
+                        PieceColor.BLACK: PlayerType.HUMAN}
+        self.logic.reset()
+        self.board.set_pos_from_logic(self.logic)
+
+    def start_vs_bot(self, bot_color: Color):
+        self.menu.close()
+        self.clean()
+        self.mode = GameMode.Bot
+        if bot_color == PieceColor.WHITE:
+            self.board.flipped = True
+            self.players = {PieceColor.WHITE: PlayerType.BOT,
+                            PieceColor.BLACK: PlayerType.HUMAN}
+        else:
+            self.board.flipped = False
+            self.players = {PieceColor.WHITE: PlayerType.HUMAN,
+                            PieceColor.BLACK: PlayerType.BOT}
+        self.logic.reset()
+        self.board.set_pos_from_logic(self.logic)
 
     def run(self):
         clock = pygame.time.Clock()
         while self.window_on:
             clock.tick(60)
             self.events()
-            # self.update_board_if_new_info()
+            if self.mode == GameMode.Bot:
+                self.bot_events()
             self.draw()
+
+    def bot_events(self):
+        if not self.queue.empty():
+            evaluation, move = self.queue.get()
+            self.play(move)
+            self.bot_is_thinking = False
 
     def events(self):
         events = pygame.event.get()
+        self.menu.handle_events(events)
         for event in events:
             self.ui.handle_event(event)
-            self.board.handle_event(event)
+            if self.mode == GameMode.Local:
+                self.board.handle_event(event, dummy_mode=self.mode is None)
+            elif self.mode == GameMode.Bot:
+                if self.players.get(self.logic.turn) == PlayerType.HUMAN:
+                    self.board.handle_event(event)
+                else:
+                    if not self.bot_is_thinking:
+                        self.bot_is_thinking = True
+                        self.thread_bot = threading.Thread(target=Bot().play, args=(self.logic, self.queue))
+                        self.thread_bot.start()
+
+            elif self.mode == GameMode.Online:
+                pass
+
             if event.type == pygame.QUIT:
                 self.window_on = False
                 self.game_on = False
@@ -80,6 +163,7 @@ class Game:
         self.win.fill(BACKGROUND_COLOR)
         self.board.draw(self.win)
         self.btn_flip_board.draw(self.win, x + w - 25, y + h + 10)
+        self.btn_settings.draw(self.win, self.win.get_width() - 60, 10)
         self.menu.draw(self.win)
         pygame.display.flip()
 
@@ -204,78 +288,3 @@ class Game:
 
     def flip_board(self):
         self.board.flipped = not self.board.flipped
-
-
-class MenuPart:
-    def __init__(self):
-        self._name: str = ""
-        self.rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
-        self.name_label: Optional[Label] = None
-        self.ui = Group()
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if self._name != value:
-            self._name = value
-            self.name_label = Label(self._name.title().replace("_",' '), font_color=Color("black"), font=FONT)
-            self.name_label.rect.midtop = self.rect.midtop
-
-    def handle_event(self, event):
-        self.ui.handle_event(event)
-
-    def draw(self, win):
-        self.rect.center = win.get_rect().center
-        pygame.draw.rect(win, Color("gray"), self.rect)
-
-        if self.name_label:
-            self.name_label.draw(win, *self.rect.move(10, 10).topleft)
-
-
-class GameModeSelection(MenuPart):
-    def __init__(self):
-        super().__init__()
-        self.name = "mode_selection"
-        self.rect = pygame.Rect(0, 0, 300, 300)
-
-        params = {"rect_color": (199, 201, 207),
-                  "font": FONT,
-                  "fixed_width": self.rect.w - 20,
-                  "text_align": "center",
-                  "ui_group": self.ui}
-        self.btn_local = button.ButtonText("1v1 Local", **params)
-        self.btn_online = button.ButtonText("1v1 Online", **params)
-        self.btn_bot = button.ButtonText("1vBot", **params)
-
-    def draw(self, win):
-        super().draw(win)
-        self.btn_local.draw(win, *self.rect.move(10, 75).topleft)
-        self.btn_online.draw(win, *self.rect.move(10, 150).topleft)
-        self.btn_bot.draw(win, *self.rect.move(10, 225).topleft)
-
-
-class Menu:
-    def __init__(self):
-        self.menus: dict[str, MenuPart] = {"game_selection": GameModeSelection()}
-        self.active_element: Optional[MenuPart] = None
-        self.rect = pygame.display.get_surface().get_rect()
-
-    def add_elements(self, elements: list[MenuPart]):
-        if elements is None:
-            return
-        for element in elements:
-            self.menus[element.name] = element
-
-    def open(self, name):
-        self.active_element = self.menus[name]
-
-    def draw(self, win):
-        if self.active_element:
-            self.active_element.draw(win)
-
-    def handle_event(self, event):
-        if self.active_element:
-            self.active_element.handle_event(event)

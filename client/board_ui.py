@@ -1,12 +1,10 @@
 import pygame
-from client.pieces import Piece
-from client.square import Move
+from pieces import Piece, isInbounds
+from square import Move
 from logic import Square
 from constants import *
 from typing import Tuple, Optional
 from logic import Logic
-from fonctions import isInbounds
-
 from pygame import gfxdraw
 
 PADDING_WIDTH = 150
@@ -37,7 +35,7 @@ def coord_from_pos(coord_x, coord_y) -> Tuple[int, int]:
 
 class Board:
     def __init__(self, logic, perform_move: callable):
-        self.logic = logic
+        self.logic: Logic = logic
         self.board_to_output = [[None for _ in range(8)] for _ in range(8)]
 
         self.clicked_piece_coord = None
@@ -100,7 +98,7 @@ class Board:
     def flip_board(self):
         self.flipped = not self.flipped
 
-    def handle_event(self, event):
+    def handle_event(self, event, dummy_mode=False):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = pygame.mouse.get_pos()
             if self.clicked(pos):
@@ -115,7 +113,7 @@ class Board:
                 pos = pygame.mouse.get_pos()
                 dest_coord = self.drop(pos)
                 move = Move(Square(*self.clicked_piece_coord), Square(*dest_coord))
-                if move in self.current_piece_legal_moves:
+                if move in self.current_piece_legal_moves and not dummy_mode:
                     self.current_piece_legal_moves.clear()
                     self.play(move)
 

@@ -1,5 +1,7 @@
 import numpy as np
-from pieces import Square, Move, Color, piece_from_abbreviation, other_color, Side, Piece, Queen, King
+
+from client.constants import STARTINGPOSFEN
+from pieces import Square, Move, PieceColor, piece_from_abbreviation, other_color, Side, Piece, Queen, King
 import enum
 
 
@@ -10,15 +12,11 @@ class State(enum.Enum):
     DRAW = 3  # 50 moves rule, stalemate
 
 
-class Piece:  # Forward declaration
-    pass
-
-
 class Logic:
-    def __init__(self, fen):
+    def __init__(self, fen=STARTINGPOSFEN):
         self.board = np.empty((8, 8), dtype=Piece)
         self.state = State.GAMEON
-        self.turn: Color = Color.WHITE
+        self.turn: PieceColor = PieceColor.WHITE
         self.castle_rights_bit = 0
         self.full_move_number = int()
         self.half_move_clock = int()
@@ -26,11 +24,12 @@ class Logic:
         self.load_fen(fen)
         self.move_history = []
         self.fen_history = []
-        self.king_square = {Color.WHITE: self.get_king_square(Color.WHITE),
-                            Color.BLACK: self.get_king_square(Color.BLACK)}
+        self.king_square = {PieceColor.WHITE: self.get_king_square(PieceColor.WHITE),
+                            PieceColor.BLACK: self.get_king_square(PieceColor.BLACK)}
 
     def load_fen(self, fen) -> None:
         """loads a fen into the board"""
+        self.board = np.empty((8, 8), dtype=Piece)
         fen = fen.split(" ")
         fen_board = fen[0].split("/")
         for i in range(8):
@@ -41,7 +40,7 @@ class Logic:
                 else:
                     self.set_piece(Square(7 - i, j), piece_from_abbreviation(char, 7 - i, j))
                     j += 1
-        self.turn = Color.WHITE if fen[1] == "w" else Color.BLACK
+        self.turn = PieceColor.WHITE if fen[1] == "w" else PieceColor.BLACK
         str_castle_rights = fen[2]
         self.castle_rights_bit = 0b0000
         if "K" in str_castle_rights:
@@ -76,7 +75,7 @@ class Logic:
                 empty = 0
             if i != 0:
                 fen += "/"
-        fen += f" {'w' if self.turn == Color.WHITE else 'b'}"
+        fen += f" {'w' if self.turn == PieceColor.WHITE else 'b'}"
         str_castle_rights = ""
         if self.castle_rights_bit & 0b0001:
             str_castle_rights += "K"
@@ -98,7 +97,7 @@ class Logic:
     def set_piece(self, square: Square, piece: Piece | None) -> None:
         self.board[square.i][square.j] = piece
 
-    def squares_attacked_by(self, color: Color) -> list[Square]:
+    def squares_attacked_by(self, color: PieceColor) -> list[Square]:
         L = set()
         for i in range(8):
             for j in range(8):
@@ -128,7 +127,7 @@ class Logic:
         else:
             return piece.legal_moves(self)
 
-    def ordered_legal_moves(self, color: Color):
+    def ordered_legal_moves(self, color: PieceColor):
         """Returns a list of legal moves where the checks are first then captures then the rest"""
         legal_moves = self.legal_moves(color)
         checks = []
@@ -143,7 +142,7 @@ class Logic:
                 rest.append(move)
         return checks + captures + rest
 
-    def get_king_square(self, color: Color) -> Square:
+    def get_king_square(self, color: PieceColor) -> Square:
         for i in range(8):
             for j in range(8):
                 p = self.get_piece(Square(i, j))
@@ -151,7 +150,7 @@ class Logic:
                     return Square(i, j)
         raise Exception(f"No king found for {color}\n {self}")
 
-    def is_in_check(self, color: Color) -> bool:
+    def is_in_check(self, color: PieceColor) -> bool:
         s = self.king_square[color]
         squares_attacked = self.squares_attacked_by(other_color(color))
         return s in squares_attacked
@@ -167,7 +166,7 @@ class Logic:
                     return
 
         if self.is_in_check(self.turn):
-            self.state = State.WHITEWINS if self.turn == Color.BLACK else State.BLACKWINS
+            self.state = State.WHITEWINS if self.turn == PieceColor.BLACK else State.BLACKWINS
         else:
             self.state = State.DRAW
 
@@ -202,7 +201,8 @@ class Logic:
             self.remove_castle_rights(piece.color, side)
         elif piece_type == "p" and move.destination.i == (7 if piece.direction == 1 else 0):
             self.set_piece(move.origin, None)
-            self.set_piece(move.destination, Queen(piece.color, move.destination))
+            q: Piece = Queen(piece.color, move.destination)
+            self.set_piece(move.destination, q)
             return
 
             # en passant square
@@ -216,20 +216,26 @@ class Logic:
         piece.moved(move.destination)
 
     def real_move(self, move: Move) -> None:
-        """Called once the move is validated, updates the game state, switches the turn and increments the halfmove clock"""
+        """
+        Called once the move is validated, updates the game state, switches the turn and increments the halfmove
+        clock
+        """
         self.move_history.append(move)
         self.fen_history.append(self.get_fen())
         self.move(move)
         self.switch_turn()
 
-        if self.turn == Color.WHITE:
+        if self.turn == PieceColor.WHITE:
             self.full_move_number += 1
 
         self.update_game_state()
 
-    def remove_castle_rights(self, color: Color, side: Side) -> None:
-        """Removes the castle rights for the given color and side 1110 means no castle rights for white king and KINGSIDE"""
-        if color == Color.WHITE:
+    def remove_castle_rights(self, color: PieceColor, side: Side) -> None:
+        """
+        Removes the castle rights for the given color and side 1110 means no castle rights for white king and
+        KINGSIDE
+        """
+        if color == PieceColor.WHITE:
             if side == Side.KING:
                 self.castle_rights_bit &= 0b1110
             else:
@@ -241,7 +247,12 @@ class Logic:
                 self.castle_rights_bit &= 0b0111
 
     def switch_turn(self) -> None:
-        self.turn = Color.WHITE if self.turn == Color.BLACK else Color.BLACK
+        self.turn = PieceColor.WHITE if self.turn == PieceColor.BLACK else PieceColor.BLACK
+
+    def reset(self):
+        self.load_fen(STARTINGPOSFEN)
+        self.move_history = []
+        self.fen_history = []
 
     def __repr__(self):
         s = ""
