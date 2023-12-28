@@ -1,10 +1,13 @@
 import pygame
 from client.pieces import Piece
+from client.square import Move
 from logic import Square
 from constants import *
 from typing import Tuple, Optional
 from logic import Logic
 from fonctions import isInbounds
+
+from pygame import gfxdraw
 
 PADDING_WIDTH = 150
 PADDING_HEIGHT = 75
@@ -33,7 +36,8 @@ def coord_from_pos(coord_x, coord_y) -> Tuple[int, int]:
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, logic, perform_move: callable):
+        self.logic = logic
         self.board_to_output = [[None for _ in range(8)] for _ in range(8)]
 
         self.clicked_piece_coord = None
@@ -43,7 +47,10 @@ class Board:
         self.dragging = False
         self.flipped = False
 
+        self.current_piece_legal_moves = []
         self.rect = pygame.Rect(*get_x_y_w_h())
+
+        self.play = perform_move
 
     def set_to_gone(self, i, j):
         self.dragged_piece = self._get_piece_at(i, j)
@@ -93,19 +100,41 @@ class Board:
     def flip_board(self):
         self.flipped = not self.flipped
 
-    def draw(self, win, dots):
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            pos = pygame.mouse.get_pos()
+            if self.clicked(pos):
+                piece = self.logic.get_piece(Square(*self.clicked_piece_coord))
+                if self.logic.turn != piece.color:
+                    return
+                self.current_piece_legal_moves = piece.legal_moves(self.logic)
+            else:
+                self.current_piece_legal_moves.clear()
+        if self.dragging:
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                pos = pygame.mouse.get_pos()
+                dest_coord = self.drop(pos)
+                move = Move(Square(*self.clicked_piece_coord), Square(*dest_coord))
+                if move in self.current_piece_legal_moves:
+                    self.current_piece_legal_moves.clear()
+                    self.play(move)
+
+    def draw(self, win):
         """Draws everything"""
         self.draw_board(win)
         self.draw_pieces(win)
-        self.draw_dots(win, dots)
+        self.draw_dots(win, )
         self.draw_dragged_piece(win)
 
     def draw_dragged_piece(self, win):
         if self.dragging:
             _, _, w, _ = get_x_y_w_h()
             case_size = w // 8
-            img = pygame.transform.smoothscale(pieces_images[self.dragged_piece.get_fen()],
-                                               (case_size * 1.1, case_size * 1.1))
+            abbr = self.dragged_piece.get_fen()
+            if abbr not in cache_img:
+                cache_img[abbr] = pygame.transform.smoothscale(pieces_images[abbr], (case_size, case_size))
+
+            img = cache_img[abbr]
             x, y = pygame.mouse.get_pos()
             win.blit(img, img.get_rect(center=(x, y)))
 
@@ -136,16 +165,26 @@ class Board:
                     img = pygame.transform.smoothscale(pieces_images[piece.get_fen()], (case_size, case_size))
                     win.blit(img, (x + j * case_size, y + i * case_size))
 
-    def draw_dots(self, win, moves):
+    def draw_dots(self, win):
         x, y = self.rect.x, self.rect.y
         w = self.rect.w
         case_size = w // 8
-        for move in moves:
+        radius = case_size // 10
+
+        for move in self.current_piece_legal_moves:
             i, j = move.destination.i, move.destination.j
             i, j = self._f(i, j)
-            pygame.draw.circle(win, RED, (x + j * case_size + case_size // 2, y + i * case_size + case_size // 2), 5)
+
+            # Calculate the center of the circle
+            center_x = x + j * case_size + case_size // 2
+            center_y = y + i * case_size + case_size // 2
+
+            # avoid aliasing on small circles
+            gfxdraw.aacircle(win, center_x, center_y, radius, (100, 111, 64))
+            gfxdraw.filled_circle(win, center_x, center_y, radius, (100, 111, 64))
 
 
+cache_img = {}  # str: pygame.Surface
 pieces_images = {
     'P': P_image,
     'R': R_image,

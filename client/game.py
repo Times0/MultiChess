@@ -1,29 +1,31 @@
+import os
 import threading
-
 from PygameUIKit import Group
 from PygameUIKit.utilis import load_image
 
 from board_ui import Board, get_x_y_w_h, pygame
-from logic import Logic, Color, State, Square, Move
-from constants import *
+from logic import Logic, Color, State
 from PygameUIKit.button import ButtonPngIcon
 from reseau import *
 import time
 import logging
 
+
 logging.basicConfig(level=logging.INFO)
 
+BACKGROUND_COLOR = (22, 21, 18)
 COLOR_CHANGING = (0, 85, 170)
+
+SERVER_MODE = False
 
 
 class Game:
     def __init__(self, win, fen):
         self.win = win
         self.logic = Logic(fen)
-        self.board = Board()
+        self.board = Board(self.logic, self.play)
         self.board.set_pos_from_logic(self.logic)
 
-        self.current_piece_legal_moves = []
         self.game_on = True
         self.window_on = True
 
@@ -45,13 +47,14 @@ class Game:
         while self.window_on:
             clock.tick(60)
             self.events()
-            self.update_board_if_new_info()
+            # self.update_board_if_new_info()
             self.draw()
 
     def events(self):
         events = pygame.event.get()
         for event in events:
             self.ui.handle_event(event)
+            self.board.handle_event(event)
             if event.type == pygame.QUIT:
                 self.window_on = False
                 self.game_on = False
@@ -60,46 +63,26 @@ class Game:
                     self.socket.close()
                 except AttributeError:
                     pass
-            if not self.game_on:
-                continue
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if self.board.clicked(pos):
-                    if self.logic.turn != self.logic.get_piece(Square(*self.board.clicked_piece_coord)).color:
-                        continue
-                    self.current_piece_legal_moves = self.logic.get_legal_moves_piece(
-                        Square(*self.board.clicked_piece_coord))
             if event.type == pygame.WINDOWRESIZED:
                 self.board.rect = pygame.Rect(get_x_y_w_h())
-            if self.board.dragging:
-                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    pos = pygame.mouse.get_pos()
-                    dest_coord = self.board.drop(pos)
-                    move = Move(
-                        Square(*self.board.clicked_piece_coord), Square(*dest_coord)
-                    )
-
-                    for m in self.current_piece_legal_moves:
-                        if m == move:
-                            self.current_piece_legal_moves = []
-                            self.play(m)
-                            break
 
     def play(self, move):
-        if not self.connected_to_server:
-            return
-        logging.info(f"Sending move: {move.get_uci()} to server")
-        send_move_to_server(self.socket, move.get_uci())
+        if SERVER_MODE:
+            logging.info(f"Sending move: {move.get_uci()} to server")
+            send_move_to_server(self.socket, move.get_uci())
+        else:
+            logging.info(f"Playing move: {move.get_uci()}")
+            self.logic.real_move(move)
+            self.board.set_pos_from_logic(self.logic)
 
     def check_end(self):
         if self.logic.state != State.GAMEON:
-            logging.info(self.logic.state)
             self.game_on = False
 
     def draw(self):
         x, y, w, h = get_x_y_w_h()
-        self.win.fill((39, 35, 35))
-        self.board.draw(self.win, self.current_piece_legal_moves)
+        self.win.fill(BACKGROUND_COLOR)
+        self.board.draw(self.win)
         self.btn_flip_board.draw(self.win, x + w - 25, y + h + 10)
         pygame.display.flip()
 
@@ -110,7 +93,7 @@ class Game:
             logging.debug(f"Updating fen from {old_fen} to {new_fen}")
             self.logic = Logic(new_fen)
             self.board.set_pos_from_logic(self.logic)
-            self.current_piece_legal_moves = []
+            # self.current_piece_legal_moves = []
 
     def thread_server_handler(self):
         """
@@ -203,8 +186,6 @@ class Game:
         self.connected_to_server = False
         self.waiting_for_opponent = False
         self.color = None
-
-    # button functions
 
     def connect_to_server(self):
         print("Connecting to server")

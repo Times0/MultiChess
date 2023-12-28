@@ -200,7 +200,6 @@ class Logic:
         elif piece_type == "r" and piece.never_moved:
             side = Side.KING if piece.square.j < move.destination.j else Side.QUEEN
             self.remove_castle_rights(piece.color, side)
-        # promotion
         elif piece_type == "p" and move.destination.i == (7 if piece.direction == 1 else 0):
             self.set_piece(move.origin, None)
             self.set_piece(move.destination, Queen(piece.color, move.destination))
@@ -209,8 +208,6 @@ class Logic:
             # en passant square
         if piece_type == "p" and move.destination.i == (3 if piece.direction == 1 else 4):
             self.en_passant_square = Square(move.origin.i + piece.direction, move.destination.j)
-
-        # en passant capture
         elif piece_type == "p" and not self.get_piece(move.destination) and move.destination.j != move.origin.j:
             self.set_piece(Square(move.destination.i - piece.direction, move.destination.j), None)
 
