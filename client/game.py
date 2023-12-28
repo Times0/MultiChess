@@ -112,22 +112,14 @@ class Game:
         self.logic.reset()
         self.board.set_pos_from_logic(self.logic)
 
-    def start_online_game(self, client_color: PieceColor):
+    def start_online_game(self):
         logging.info("Starting online game")
         self.menu.close()
         self.clean()
         self.mode = GameMode.Online
-
-        if client_color == PieceColor.WHITE:
-            self.board.flipped = True
-            self.players = {PieceColor.WHITE: PlayerType.HUMAN,
-                            PieceColor.BLACK: PlayerType.ONLINE}
-        else:
-            self.board.flipped = False
-            self.players = {PieceColor.WHITE: PlayerType.ONLINE,
-                            PieceColor.BLACK: PlayerType.HUMAN}
         self.logic.reset()
         self.board.set_pos_from_logic(self.logic)
+        # Color is decided later
 
     def server_listner(self):
         print("Server listner started")
@@ -182,7 +174,6 @@ class Game:
             if self.mode == GameMode.Bot:
                 self.bot_events()
             elif self.mode == GameMode.Online:
-                print(self.menu.connection_menu.connected_to_server)
                 if self.menu.connection_menu.connected_to_server and not self.connected_to_server:
                     self.server_thread = threading.Thread(target=self.server_listner)
                     self.server_thread.start()
