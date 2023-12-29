@@ -80,9 +80,9 @@ class Game:
 
     def clean(self):
         if self.thread_bot:
-            self.thread_bot.join()
+            self.thread_bot.join(timeout=0.1)
         if self.server_thread:
-            self.server_thread.join()
+            self.server_thread.join(timeout=0.1)
         self.thread_bot = None
         self.server_thread = None
         self.mode = None
