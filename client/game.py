@@ -83,10 +83,12 @@ class Game:
             self.thread_bot.join()
         if self.server_thread:
             self.server_thread.join()
-
-        self.queue = queue.Queue()
         self.thread_bot = None
         self.server_thread = None
+        self.mode = None
+        self.players = {PieceColor.WHITE: None,
+                        PieceColor.BLACK: None}
+        self.queue = queue.Queue()
 
     def start_local_game(self):
         self.menu.close()
@@ -236,7 +238,7 @@ class Game:
         else:
             self.player_label.text = "Black to play"
         self.player_label.draw(self.win,
-                               self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 50)
+                               self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 80)
         self.menu.draw(self.win)
         pygame.display.flip()
 
