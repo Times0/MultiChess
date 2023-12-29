@@ -88,6 +88,7 @@ class Game:
         self.mode = None
         self.players = {PieceColor.WHITE: None,
                         PieceColor.BLACK: None}
+        self.menu.connection_menu.btn_connect.thread = None
         self.queue = queue.Queue()
 
     def start_local_game(self):
