@@ -158,8 +158,10 @@ class Game:
                         time.sleep(1)
                         self.menu.close()
                 elif line.startswith("fen:"):
-                    fen_str = line[4:]
-                    self.last_retrieved_fen = fen_str.strip()
+                    fen_str = line[4:].strip()
+                    if fen_str != self.logic.get_fen():
+                        self.logic.load_fen(fen_str)
+
                 elif line.startswith("info:"):
                     type_info = line[5:].strip()
                     if type_info == "SERVER STOP":
@@ -250,14 +252,14 @@ class Game:
         if self.logic.state != State.GAMEON:
             self.game_on = False
 
-    def update_board_if_new_info(self):
-        old_fen = self.logic.get_fen()
-        new_fen = self.last_retrieved_fen
-        if new_fen != old_fen:
-            logging.debug(f"Updating fen from {old_fen} to {new_fen}")
-            self.logic = Logic(new_fen)
-            self.board.set_pos_from_logic(self.logic)
-            # self.current_piece_legal_moves = []
+    # def update_board_if_new_info(self):
+    #     old_fen = self.logic.get_fen()
+    #     new_fen = self.last_retrieved_fen
+    #     if new_fen != old_fen:
+    #         logging.debug(f"Updating fen from {old_fen} to {new_fen}")
+    #         self.logic = Logic(new_fen)
+    #         self.board.set_pos_from_logic(self.logic)
+    #         # self.current_piece_legal_moves = []
 
     def moves_handler(self):
         should_run = True
