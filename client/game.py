@@ -79,9 +79,9 @@ class Game:
         self.mode: Optional[GameMode] = None
 
     def clean(self):
-        if self.thread_bot:
+        if self.thread_bot and self.thread_bot.is_alive():
             self.thread_bot.join(timeout=0.1)
-        if self.server_thread:
+        if self.server_thread and self.server_thread.is_alive():
             self.server_thread.join(timeout=0.1)
         self.thread_bot = None
         self.server_thread = None
