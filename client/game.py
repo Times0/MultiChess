@@ -161,6 +161,7 @@ class Game:
                     fen_str = line[4:].strip()
                     if fen_str != self.logic.get_fen():
                         self.logic.load_fen(fen_str)
+                        self.board.set_pos_from_logic(self.logic)
 
                 elif line.startswith("info:"):
                     type_info = line[5:].strip()
