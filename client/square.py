@@ -15,7 +15,7 @@ class Square:
         else:
             self.i = args[0]
             self.j = args[1]
-    
+
     def __str__(self):
         return f"{chr(self.j + 97)}{self.i + 1}"
 
@@ -36,8 +36,8 @@ class Move:
         self.destination = destination
         self.promotion = promotion
 
-        self.is_capture = False
-        self.is_check = False
+        self.is_capture = is_capture
+        self.is_check = is_check
 
     def __eq__(self, other):
         return self.origin == other.origin and self.destination == other.destination
@@ -50,6 +50,6 @@ class Move:
 
     def __repr__(self):
         return self.__str__()
-    
+
     def get_uci(self):
         return f"{self.origin}{self.destination}"

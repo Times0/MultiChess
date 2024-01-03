@@ -1,27 +1,64 @@
-from itertools import product
 from enum import Enum
-from fonctions import other_color, isInbounds
+from typing import Optional
+
 from square import Square, Move, Side
 
 
 # forwards declaration
 class Logic:
-    pass
+    def __init__(self, fen):
+        self.turn: PieceColor = PieceColor.WHITE
+        self.en_passant_square: Optional[Square] = None
+        self.castle_rights_bit: int = 0b1111
+        self.board: list[list[Piece]]
+
+    def get_piece(self, square: Square) -> 'Piece':
+        pass
+
+    def move(self, move: Move) -> None:
+        pass
+
+    def squares_attacked_by(self, color: "PieceColor") -> list[Square]:
+        pass
+
+    def get_fen(self) -> str:
+        pass
 
 
-class Color(Enum):
-    WHITE = 0
-    BLACK = 1
+class PieceColor(Enum):
+    WHITE = "White"
+    BLACK = "Black"
+
+
+def other_color(color: "PieceColor"):
+    return PieceColor.WHITE if color == PieceColor.BLACK else PieceColor.BLACK
+
+
+def isInrectangle(pos, pos0, width, height):
+    """
+    Returns True if the point defined by the position is in the rectangle
+    :param pos:
+    :param pos0: top left point of the rectangle
+    :param width:
+    :param height:
+    :return:bool
+    """
+    return pos0[0] <= pos[0] <= pos0[0] + width and pos0[1] <= pos[1] <= pos0[1] + height
+
+
+def isInbounds(i, j):
+    return 0 <= i <= 7 and 0 <= j <= 7
 
 
 class Piece:
     def __init__(self, color, square: Square):
         self.never_moved = True
-        self.color: Color = color
+        self.color: PieceColor = color
         self.square: Square = square
 
-    def set_coord_weird(self, i, j) -> None:
-        self.i, self.j = i, j
+        self.abbreviation = dico1[type(self)]
+        if self.color == PieceColor.WHITE:
+            self.abbreviation = self.abbreviation.upper()
 
     def almost_legal_moves(self, board: Logic) -> list[Move]:
         """Cette fonction est overriden pour chacune des pièces, elle renvoie les moves possible pour une pièce
@@ -60,38 +97,36 @@ class Piece:
 
     def get_fen(self) -> str:
         """Returns the fen notation of the piece"""
-        return self.abreviation if self.color == Color.WHITE else self.abreviation.lower()
+        return self.abbreviation
 
     def __str__(self):
-        s = f"{self.color} {self.abreviation} at {self.square}"
+        s = f"{self.color} {self.abbreviation} at {self.square}"
         return s
 
 
 class Pawn(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.direction = 1 if self.color == Color.WHITE else -1
-        self.abreviation = "P"
+        self.direction = 1 if self.color == PieceColor.WHITE else -1
 
     def almost_legal_moves(self, board: Logic) -> list[Move]:
-        piece_at = board.get_piece
         i, j = self.square.i, self.square.j
         dir = self.direction
         returnlist = []
 
         # move devant
         i1 = i + dir  # case devant le pion (relativement)
-        if isInbounds(i1, j) and not piece_at(Square(i1, j)):
+        if isInbounds(i1, j) and not board.get_piece(Square(i1, j)):
             returnlist.append(Move(self.square, Square(i1, j)))
-            if self.square.i == (1 if self.color == Color.WHITE else 6):
+            if self.square.i == (1 if self.color == PieceColor.WHITE else 6):
                 i2 = i1 + dir  # deux cases devant le pion
-                if isInbounds(i2, j) and not piece_at(Square(i2, j)):
+                if isInbounds(i2, j) and not board.get_piece(Square(i2, j)):
                     returnlist.append(Move(self.square, Square(i2, j)))
 
         # captures
         for ja in [j - 1, j + 1]:
             if 0 <= ja < 8:
-                p = piece_at(Square(i1, ja))
+                p = board.get_piece(Square(i1, ja))
                 if isInbounds(i1, ja) and p and p.color != self.color:
                     returnlist.append(Move(self.square, Square(i1, ja), is_capture=True))
 
@@ -103,7 +138,6 @@ class Pawn(Piece):
         return returnlist
 
     def attacking_squares(self, logic) -> list[Square]:
-        piece_at = logic.get_piece
         i, j = self.square.i, self.square.j
         dir = self.direction
         i1 = i + dir
@@ -119,10 +153,8 @@ class Pawn(Piece):
 class Bishop(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.abreviation = "B"
 
-    def almost_legal_moves(self, board) -> list[Move]:
-        piece_at = board.get_piece
+    def almost_legal_moves(self, board: Logic) -> list[Move]:
         returnlist = []
         i, j = self.square.i, self.square.j
 
@@ -130,7 +162,7 @@ class Bishop(Piece):
             i1, j1 = i + a, j + b
             while isInbounds(i1, j1):
                 try:
-                    piece = piece_at(Square(i1, j1))
+                    piece = board.get_piece(Square(i1, j1))
                 except IndexError:
                     break
                 if not piece:
@@ -148,37 +180,34 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.abreviation = "R"
 
     def almost_legal_moves(self, board) -> list[Move]:
-        piece_at = board.get_piece
-        returnlist = []
+        board.get_piece = board.get_piece
+        res = []
         i, j = self.square.i, self.square.j
 
         # Check squares in each direction separately
         for a, b in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
             i1, j1 = i + a, j + b
             while isInbounds(i1, j1):
-                piece = piece_at(Square(i1, j1))
+                piece = board.get_piece(Square(i1, j1))
                 if not piece:
-                    returnlist.append(Move(self.square, Square(i1, j1)))
+                    res.append(Move(self.square, Square(i1, j1)))
                     i1, j1 = i1 + a, j1 + b
                 elif piece.color != self.color:
-                    returnlist.append(Move(self.square, Square(i1, j1), is_capture=True))
+                    res.append(Move(self.square, Square(i1, j1), is_capture=True))
                     break
                 else:
                     break
 
-        return returnlist
+        return res
 
 
 class Knight(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.abreviation = "N"
 
     def almost_legal_moves(self, board) -> list[Move]:
-        piece_at = board.get_piece
         i, j = self.square.i, self.square.j
         returnlist = []
 
@@ -186,7 +215,7 @@ class Knight(Piece):
         for a, b in [(i - 1, j - 2), (i - 1, j + 2), (i + 1, j - 2), (i + 1, j + 2), (i - 2, j - 1), (i - 2, j + 1),
                      (i + 2, j - 1), (i + 2, j + 1)]:
             if isInbounds(a, b):
-                piece = piece_at(Square(a, b))
+                piece = board.get_piece(Square(a, b))
                 if not piece:
                     returnlist.append(Move(self.square, Square(a, b)))
                 elif piece.color != self.color:
@@ -198,17 +227,15 @@ class Knight(Piece):
 class Queen(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.abreviation = "Q"
 
     def almost_legal_moves(self, board):
-        piece_at = board.get_piece
         returnlist = []
         i, j = self.square.i, self.square.j
         for a, b in [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [-1, 1], [1, -1], [-1, -1]]:
             for n in range(1, 8):  # on ne teste pas la case sur laquelle il y a déjà notre pièce
                 i1, j1 = i + a * n, j + b * n
                 if isInbounds(i1, j1):
-                    piece = piece_at(Square(i1, j1))
+                    piece = board.get_piece(Square(i1, j1))
                     if not piece:
                         returnlist.append(Move(self.square, Square(i1, j1)))
                     elif piece.color != self.color:
@@ -222,17 +249,15 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color, square: Square):
         super().__init__(color, square)
-        self.abreviation = "K"
 
     def almost_legal_moves(self, board: Logic):
-        piece_at = board.get_piece
         returnlist = []
 
         i, j = self.square.i, self.square.j
         for a, b in [[-1, -1], [-1, 1], [-1, 0], [1, -1], [1, 1], [1, 0], [0, 1], [0, -1]]:
             i1, j1 = i + a, j + b
             if isInbounds(i1, j1):
-                piece = piece_at(Square(i1, j1))
+                piece = board.get_piece(Square(i1, j1))
                 if not piece:
                     returnlist.append(Move(self.square, Square(i1, j1)))
                 elif piece.color != self.color:
@@ -242,20 +267,20 @@ class King(Piece):
         a_s = board.squares_attacked_by(other_color(self.color))
         # KING SIDE
         if self.is_castling_still_available(board, Side.KING):
-            if not piece_at(Square(i, j + 1)) and not piece_at(Square(i, j + 2)) \
+            if not board.get_piece(Square(i, j + 1)) and not board.get_piece(Square(i, j + 2)) \
                     and Square(i, j + 1) not in a_s and Square(i, j) not in a_s:
                 returnlist.append(Move(self.square, Square(i, j + 2)))
 
         # QUEEN SIDE
         if self.is_castling_still_available(board, Side.QUEEN):
-            if not piece_at(Square(i, j - 1)) and not piece_at(Square(i, j - 2)) and not piece_at(Square(i, j - 3)) \
+            if not board.get_piece(Square(i, j - 1)) and not board.get_piece(Square(i, j - 2)) and not board.get_piece(
+                    Square(i, j - 3)) \
                     and Square(i, j) not in a_s and Square(i, j - 1) not in a_s and Square(i, j - 2) not in a_s:
                 returnlist.append(Move(self.square, Square(i, j - 2)))
 
         return returnlist
 
-    def attacking_squares(self, logic):
-        piece_at = logic.get_piece
+    def attacking_squares(self, board):
         returnlist = []
 
         i, j = self.square.i, self.square.j
@@ -263,14 +288,14 @@ class King(Piece):
             i1, j1 = i + a, j + b
             if not isInbounds(i1, j1):
                 continue
-            p = piece_at(Square(i1, j1))
+            p = board.get_piece(Square(i1, j1))
             if isInbounds(i1, j1) and (not p or p.color != self.color):
                 returnlist.append(Square(i1, j1))
         return returnlist
 
     def is_castling_still_available(self, logic: Logic, side: Side):
         color = self.color
-        if color == Color.WHITE:
+        if color == PieceColor.WHITE:
             if side == Side.KING:
                 return logic.castle_rights_bit & 0b0001
             else:
@@ -283,11 +308,13 @@ class King(Piece):
 
 
 dico = {"p": Pawn, "r": Rook, "b": Bishop, "n": Knight, "q": Queen, "k": King}
+dico1 = {Pawn: "p", Rook: "r", Bishop: "b", Knight: "n", Queen: "q", King: "k", Piece: "xd"}
 dico2 = {0: None, 1: Pawn, 2: Bishop, 3: Rook, 4: Knight, 5: Queen, 6: King}
 
 
-def piece_from_abreviation(abreviation, i, j):
-    return dico[abreviation.lower()](Color.BLACK if abreviation.lower() == abreviation else Color.WHITE, Square(i, j))
+def piece_from_abbreviation(abbreviation, i, j):
+    return dico[abbreviation.lower()](PieceColor.BLACK if abbreviation.lower() == abbreviation else PieceColor.WHITE,
+                                      Square(i, j))
 
 
-piece_value = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 1000}
+piece_value = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 1000, "p": 1, "n": 3, "b": 3, "r": 5, "q": 9, "k": 1000}
