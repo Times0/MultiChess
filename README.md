@@ -31,8 +31,6 @@ python main.py
 ```
 
 ## Screenshots
-First, connect to the server with the ip and the port of the server.
-![](assets/2023-05-07-02-56-38.png)
+![img_2.png](assets/img_2.png)
+![img_1.png](assets/img_1.png)
 
-Then play !
-![](assets/2023-05-07-02-58-53.png)
