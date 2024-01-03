@@ -34,3 +34,7 @@ python main.py
 ![img_2.png](assets/img_2.png)
 ![img_1.png](assets/img_1.png)
 
+
+
+https://github.com/Times0/MultiChess/assets/45049767/c1290a8d-757e-43f7-ba0d-75e2db992efb
+
