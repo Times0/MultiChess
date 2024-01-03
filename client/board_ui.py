@@ -100,14 +100,29 @@ class Board:
 
     def handle_event(self, event, dummy_mode=False):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            pos = pygame.mouse.get_pos()
-            if self.clicked(pos):
-                piece = self.logic.get_piece(Square(*self.clicked_piece_coord))
-                if self.logic.turn != piece.color:
-                    return
-                self.current_piece_legal_moves = piece.legal_moves(self.logic)
+            if self.current_piece_legal_moves:
+                pos = pygame.mouse.get_pos()
+                dest_coord = self.drop(pos)
+                move = Move(Square(*self.clicked_piece_coord), Square(*dest_coord))
+                if move in self.current_piece_legal_moves and not dummy_mode:
+                    self.current_piece_legal_moves.clear()
+                    self.play(move)
+                elif self.clicked(pos):
+                    piece = self.logic.get_piece(Square(*self.clicked_piece_coord))
+                    if self.logic.turn != piece.color:
+                        return
+                    self.current_piece_legal_moves = piece.legal_moves(self.logic)
+                else:
+                    self.current_piece_legal_moves.clear()
             else:
-                self.current_piece_legal_moves.clear()
+                pos = pygame.mouse.get_pos()
+                if self.clicked(pos):
+                    piece = self.logic.get_piece(Square(*self.clicked_piece_coord))
+                    if self.logic.turn != piece.color:
+                        return
+                    self.current_piece_legal_moves = piece.legal_moves(self.logic)
+                else:
+                    self.current_piece_legal_moves.clear()
         if self.dragging:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 pos = pygame.mouse.get_pos()

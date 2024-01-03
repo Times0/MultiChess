@@ -1,6 +1,5 @@
 import os
 import queue
-import socket
 import threading
 from enum import Enum
 from typing import Optional
@@ -73,7 +72,7 @@ class Game:
         # Menus
         self.menu = Menu()
         game_selection = GameModeSelection(self.start_local_game, self.start_vs_bot, manager=self.menu)
-        server_selection = ServerConnection(self.start_online_game, game_socket=self.socket)
+        server_selection = ServerConnection(self.start_online_game, game_socket=self.socket, manager=self.menu)
         self.menu.add_elements([game_selection, server_selection])
         self.menu.open("mode_selection")
         self.mode: Optional[GameMode] = None
@@ -190,6 +189,10 @@ class Game:
             self.draw()
 
     def bot_events(self):
+        if self.players.get(self.logic.turn) == PlayerType.BOT and not self.bot_is_thinking:
+            self.bot_is_thinking = True
+            self.thread_bot = threading.Thread(target=Bot().play, args=(self.logic, self.queue))
+            self.thread_bot.start()
         if not self.queue.empty():
             evaluation, move = self.queue.get()
             self.play(move)
@@ -205,18 +208,11 @@ class Game:
             elif self.mode == GameMode.Bot:
                 if self.players.get(self.logic.turn) == PlayerType.HUMAN:
                     self.board.handle_event(event)
-                else:
-                    if not self.bot_is_thinking:
-                        self.bot_is_thinking = True
-                        self.thread_bot = threading.Thread(target=Bot().play, args=(self.logic, self.queue))
-                        self.thread_bot.start()
-
             elif self.mode == GameMode.Online:
                 if self.players.get(self.logic.turn) == PlayerType.HUMAN:
                     self.board.handle_event(event)
                 else:
                     pass
-
             if event.type == pygame.QUIT:
                 self.window_on = False
                 self.game_on = False
@@ -238,8 +234,8 @@ class Game:
             self.player_label.text = "White to play"
         else:
             self.player_label.text = "Black to play"
-        self.player_label.draw(self.win,
-                               self.win.get_width() // 2 - self.player_label.rect.w // 2, self.win.get_height() - 80)
+        self.player_label.draw(self.win, self.win.get_width() // 2 - self.player_label.rect.w // 2,
+                               self.win.get_height() - 60)
         self.menu.draw(self.win)
         pygame.display.flip()
 

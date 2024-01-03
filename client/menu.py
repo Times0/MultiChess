@@ -22,7 +22,7 @@ CONNECTFONT = pygame.font.SysFont("lucidafaxdemigras", 40)
 
 
 class MenuPart:
-    def __init__(self, manager=None):
+    def __init__(self, manager):
         self._name: str = ""
         self.rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self.name_label: Optional[Label] = None
@@ -44,6 +44,8 @@ class MenuPart:
         pass
 
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.manager.close()
         self.ui.handle_event(event)
 
     def draw(self, win):
@@ -78,8 +80,8 @@ class GameModeSelection(MenuPart):
 
 
 class ServerConnection(MenuPart):
-    def __init__(self, start_game, game_socket):
-        super().__init__()
+    def __init__(self, start_game, game_socket, manager):
+        super().__init__(manager)
         self.name = "connection"
         self.rect = pygame.Rect(0, 0, 300, 400)
         self.server_thread = threading.Thread(target=self.thread_server_connection)
